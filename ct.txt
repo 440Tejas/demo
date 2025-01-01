@@ -1,0 +1,73 @@
+string str=Java is fun and Java is powerful
+
+str.split("")
+
+Arrays.stream(str.split(" ")).collet(Collectors.groupingBy(Function.Identity,Colllectors.counting()))
+
+
+int[]a rr[1, 2, 2, 3, 4, 4, 5];
+
+
+
+import java.util.*;
+
+Map<integr,integer> map= new HashMap();
+ for(int =0;i<arr.length;i++){
+int count=0;
+for(int j=0;j<arr.lenght;j++){
+
+if(arr[i]==arr[j]){
+count++;
+}
+}
+map.put(arr[i],count);
+}
+
+
+
+
+}
+Update emp_master set columnname=value where id=?
+
+alter Table emp
+ADD salary INT
+
+
+----------------------------------------------------------------------------------------------------------------
+
+
+public <?>  add(<?> a, <?> b){
+   return a+b;
+}
+
+
+https://equifax.wd5.myworkdayjobs.com/en-US/External/job/IND-Pune-Equifax-Analytics-PTEC/Software-Engineer-Java_J00163105
+
+
+https://tiaa.wd1.myworkdayjobs.com/en-US/Search/job/Pune-IND/Associate_R240700302-1?source=LinkedIn
+kamlesh
+
+PTC
+https://www.linkedin.com/jobs/view/4102982736/?alternateChannel=search&refId=uJkQ0gddP%2BxUNSL60C7NUg%3D%3D&trackingId=%2Fk1E7WO9UaQooo6J9gV2qQ%3D%3D
+
+https://careers.mastercard.com/us/en/job/MASRUSR236895EXTERNALENUS/Software-Engineer-II-Java-Springboot-Kafka?utm_medium=phenom-feeds&source=LINKEDIN&utm_source=linkedin
+mastercard
+
+https://jobs.schaeffler.com/job-invite/28370/?locale=en_US
+
+
+
+return type of amy paritcular stream method(intermediate operations) are stream only
+return type of terminal operations are non-stream value like 	prmitive/Object not returning anything
+
+terminal operations  have the return type void means ==> it changes or display of exsiting stream.
+
+by stream method() ==> stream object
+once you apply terminal operation, then only your intediate operations are excuted
+if you not addd terminal operation then intermediate operation is not excuted
+stream operations are lazy bcz terminal opertaion are not existed menas excution of not intermediate
+
+
+object of consumer  will execute on every object of customer list.
+
+function parameter first is input and second is what will it return x`
