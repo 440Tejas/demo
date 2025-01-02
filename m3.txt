@@ -1,0 +1,3455 @@
+slip 1
+Use Apriori algorithm on groceries dataset to find which items are brought together. Use minimum support =0.25
+
+import pandas as pd
+from mlxtend.frequent_patterns import apriori, association_rules
+from mlxtend.preprocessing import TransactionEncoder
+
+# Load dataset
+data = pd.read_csv('groceries.csv', header=None)
+
+# Convert the data to a list of lists
+transactions = data.apply(lambda row: row.dropna().tolist(), axis=1).tolist()
+
+# Transform data using TransactionEncoder
+te = TransactionEncoder()
+te_array = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(te_array, columns=te.columns_)
+
+# Apply Apriori algorithm with minimum support of 0.25
+frequent_itemsets = apriori(df, min_support=0.25, use_colnames=True)
+
+# Display the frequent itemsets
+print("Frequent Itemsets with Support >= 0.25")
+print(frequent_itemsets)
+
+# Optionally, generate association rules if needed
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+print("Association Rules")
+print(rules)
+
+______________________________________________________
+Write a Python program to prepare Scatter Plot for Iris Dataset. Convert Categorical
+values in numeric format for a dataset
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import LabelEncoder
+
+# Load the Iris dataset
+iris = load_iris()
+iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+
+# Add the target (species) to the DataFrame
+iris_df['species'] = iris.target
+
+# Map the target to categorical values (just for reference)
+species_mapping = {0: 'setosa', 1: 'versicolor', 2: 'virginica'}
+iris_df['species_name'] = iris_df['species'].map(species_mapping)
+
+# Convert species (categorical values) to numeric values if not already
+label_encoder = LabelEncoder()
+iris_df['species_numeric'] = label_encoder.fit_transform(iris_df['species_name'])
+
+# Plot a scatter plot - here we'll use petal length vs petal width as an example
+plt.figure(figsize=(10, 6))
+scatter = plt.scatter(iris_df['petal length (cm)'], iris_df['petal width (cm)'], 
+                      c=iris_df['species_numeric'], cmap='viridis')
+
+# Add color legend
+plt.colorbar(scatter, ticks=[0, 1, 2], label='Species')
+plt.clim(-0.5, 2.5)
+plt.title("Scatter Plot of Petal Length vs Petal Width")
+plt.xlabel("Petal Length (cm)")
+plt.ylabel("Petal Width (cm)")
+
+# Display plot
+plt.show()
+
+______________________________________________________
+slip 2
+Write a python program to implement simple Linear Regression for predicting house price. First find all null values in a given dataset and remove them.
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+# Load the dataset (assuming it is in CSV format)
+# Replace 'house_prices.csv' with the path to your dataset
+data = pd.read_csv('house_prices.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for null values
+print("\nChecking for null values in the dataset:")
+print(data.isnull().sum())
+
+# Remove rows with null values
+data = data.dropna()
+
+# Verify that there are no null values remaining
+print("\nDataset after removing null values:")
+print(data.isnull().sum())
+
+# Assume 'size' is the feature and 'price' is the target variable
+X = data[['size']].values  # Feature matrix
+y = data['price'].values   # Target variable
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"\nMean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test, y_test, color='blue', label='Actual Prices')
+plt.plot(X_test, y_pred, color='red', label='Predicted Prices')
+plt.title("House Price Prediction using Simple Linear Regression")
+plt.xlabel("Size (Square Footage)")
+plt.ylabel("Price")
+plt.legend()
+plt.show()
+
+______________________________________________________
+The data set refers to clients of a wholesale distributor. It includes the annual spending in monetary units on diverse product categories. Using data Wholesale
+ customer dataset compute agglomerative clustering to find out annual spending clients in the same region.
+
+ import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import AgglomerativeClustering
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.cluster.hierarchy as shc
+
+# Load the dataset
+# Replace 'wholesale_customers.csv' with the actual file path
+data = pd.read_csv('wholesale_customers.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Filter out data based on the region (optional if analyzing by region)
+# For example, filter Region 1
+data_region = data[data['Region'] == 1]
+
+# Select relevant features for clustering (spending columns only)
+spending_features = data_region[['Fresh', 'Milk', 'Grocery', 'Frozen', 'Detergents_Paper', 'Delicatessen']]
+
+# Standardize the data
+scaler = StandardScaler()
+spending_scaled = scaler.fit_transform(spending_features)
+
+# Plot the Dendrogram to determine an optimal number of clusters
+plt.figure(figsize=(10, 7))
+plt.title("Dendrogram for Wholesale Customers")
+dendrogram = shc.dendrogram(shc.linkage(spending_scaled, method='ward'))
+plt.show()
+
+# Choose the number of clusters based on the dendrogram
+# Here, we assume 3 clusters based on dendrogram observation
+cluster_model = AgglomerativeClustering(n_clusters=3, affinity='euclidean', linkage='ward')
+data_region['Cluster'] = cluster_model.fit_predict(spending_scaled)
+
+# Display the first few rows with cluster labels
+print("\nDataset with Cluster Labels:")
+print(data_region[['Region', 'Fresh', 'Milk', 'Grocery', 'Frozen', 'Detergents_Paper', 'Delicatessen', 'Cluster']].head())
+
+# Visualize the clusters (e.g., Fresh vs. Milk spending)
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=data_region, x='Fresh', y='Milk', hue='Cluster', palette='viridis')
+plt.title("Agglomerative Clustering of Clients based on Annual Spending")
+plt.xlabel("Annual Spending on Fresh")
+plt.ylabel("Annual Spending on Milk")
+plt.legend(title="Cluster")
+plt.show()
+
+______________________________________________________
+slip 3
+Write a python program to implement multiple Linear Regression for a house price dataset. Divide the dataset into training and testing data. 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+
+# Load the dataset (replace 'house_prices.csv' with the actual file path)
+data = pd.read_csv('house_prices.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for null values and drop rows with null values
+print("\nChecking for null values in the dataset:")
+print(data.isnull().sum())
+data = data.dropna()
+
+# Select features (e.g., 'size', 'bedrooms', 'bathrooms') and target variable ('price')
+# Adjust these column names based on your dataset
+features = ['size', 'bedrooms', 'bathrooms', 'location']  # example feature columns
+target = 'price'  # target column
+
+# For categorical features, we need to convert them into numeric format (e.g., 'location')
+data = pd.get_dummies(data, columns=['location'], drop_first=True)
+
+# Define X (features) and y (target)
+X = data.drop(columns=[target])
+y = data[target]
+
+# Split the dataset into training (80%) and testing (20%) sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"\nMean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Display model coefficients
+print("\nModel Coefficients:")
+print(pd.DataFrame(model.coef_, X.columns, columns=["Coefficient"]))
+
+# Optional: print some actual vs. predicted values
+comparison = pd.DataFrame({'Actual': y_test, 'Predicted': y_pred})
+print("\nComparison of Actual vs. Predicted Prices:")
+print(comparison.head())
+
+______________________________________________________
+Use dataset crash.csv is an accident survivor’s dataset portal for USA hosted by  data.gov. The dataset contains passengers age and speed of vehicle (mph) at the time of impact and fate of passengers (1 for survived and 0 for not survived) after a crash.  use logistic regression to decide if the age and speed can predict the survivability of the  passengers
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the dataset (replace 'crash.csv' with the actual file path)
+data = pd.read_csv('crash.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for null values and remove rows with missing data if any
+print("\nChecking for null values in the dataset:")
+print(data.isnull().sum())
+data = data.dropna()
+
+# Select features (age and speed) and the target variable (fate)
+X = data[['age', 'speed']]
+y = data['fate']
+
+# Split the dataset into training (80%) and testing (20%) sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Logistic Regression model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+
+print(f"\nAccuracy: {accuracy}")
+print("\nConfusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(class_report)
+
+# Visualize the confusion matrix
+plt.figure(figsize=(6, 4))
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=["Not Survived", "Survived"], yticklabels=["Not Survived", "Survived"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix for Passenger Survivability Prediction")
+plt.show()
+
+______________________________________________________
+slip 4
+
+Write a python program to implement k-means algorithm on a mall_customers dataset
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+
+# Load the dataset (replace 'mall_customers.csv' with the actual file path)
+data = pd.read_csv('mall_customers.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Select relevant features for clustering (e.g., 'Annual Income' and 'Spending Score')
+# Modify these column names based on your dataset
+X = data[['Annual Income (k$)', 'Spending Score (1-100)']]
+
+# Standardize the data to improve clustering
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Use the elbow method to determine the optimal number of clusters
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=42)
+    kmeans.fit(X_scaled)
+    wcss.append(kmeans.inertia_)
+
+# Plot the elbow curve
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, 11), wcss, marker='o')
+plt.title('Elbow Method for Optimal Clusters')
+plt.xlabel('Number of Clusters')
+plt.ylabel('WCSS (Within-Cluster Sum of Squares)')
+plt.show()
+
+# From the elbow plot, choose the optimal number of clusters, e.g., 5
+optimal_clusters = 5
+kmeans = KMeans(n_clusters=optimal_clusters, init='k-means++', max_iter=300, n_init=10, random_state=42)
+data['Cluster'] = kmeans.fit_predict(X_scaled)
+
+# Display the first few rows with cluster labels
+print("\nDataset with Cluster Labels:")
+print(data[['Annual Income (k$)', 'Spending Score (1-100)', 'Cluster']].head())
+
+# Visualize the clusters
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=data, x='Annual Income (k$)', y='Spending Score (1-100)', hue='Cluster', palette='viridis', s=100, marker='o')
+plt.title("Customer Segments based on Annual Income and Spending Score")
+plt.xlabel("Annual Income (k$)")
+plt.ylabel("Spending Score (1-100)")
+plt.legend(title="Cluster")
+plt.show()
+
+______________________________________________________
+Write a python program to Implement Simple Linear Regression for predicting house price.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+# Load the dataset (replace 'house_prices.csv' with the actual file path)
+data = pd.read_csv('house_prices.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for and remove any rows with missing values
+print("\nChecking for missing values:")
+print(data.isnull().sum())
+data = data.dropna()
+
+# Define the feature (e.g., size of the house) and the target variable (price)
+X = data[['size']]  # Feature matrix (e.g., square footage)
+y = data['price']   # Target variable (house price)
+
+# Split the dataset into training and testing sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Simple Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"\nMean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test, y_test, color='blue', label='Actual Prices')
+plt.plot(X_test, y_pred, color='red', label='Predicted Prices')
+plt.title("House Price Prediction using Simple Linear Regression")
+plt.xlabel("Size (Square Footage)")
+plt.ylabel("Price")
+plt.legend()
+plt.show()
+
+# Display model coefficients
+print("\nModel Coefficient (Slope):", model.coef_[0])
+print("Model Intercept:", model.intercept_)
+
+______________________________________________________
+slip 5
+
+Write a python program to implement Multiple Linear Regression for Fuel Consumption dataset. 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+# Load the dataset (replace 'fuel_consumption.csv' with the actual file path)
+data = pd.read_csv('fuel_consumption.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for and remove any rows with missing values
+print("\nChecking for missing values:")
+print(data.isnull().sum())
+data = data.dropna()
+
+# Select relevant features and the target variable
+# Adjust these column names based on your dataset
+features = ['Engine Size', 'Cylinders', 'Fuel Consumption Comb (L/100 km)']  # example feature columns
+target = 'CO2 Emissions'  # target column
+
+# Define X (features) and y (target variable)
+X = data[features]
+y = data[target]
+
+# Split the dataset into training (80%) and testing (20%) sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Multiple Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"\nMean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Display model coefficients
+print("\nModel Coefficients:")
+coefficients = pd.DataFrame(model.coef_, X.columns, columns=["Coefficient"])
+print(coefficients)
+
+# Plot Actual vs Predicted CO2 Emissions
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, color='blue', alpha=0.6)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2, color='red')
+plt.title("Actual vs Predicted CO2 Emissions")
+plt.xlabel("Actual CO2 Emissions")
+plt.ylabel("Predicted CO2 Emissions")
+plt.show()
+
+______________________________________________________
+Write a python program to implement k-nearest Neighbors ML algorithm to build prediction model (Use iris Dataset) 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.datasets import load_iris
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the Iris dataset
+iris = load_iris()
+X = pd.DataFrame(iris.data, columns=iris.feature_names)
+y = pd.Series(iris.target, name="species")
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(X.head())
+
+# Split the dataset into training (80%) and testing (20%) sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the K-Nearest Neighbors model with k=3 (you can adjust k based on performance)
+k = 3
+knn = KNeighborsClassifier(n_neighbors=k)
+knn.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = knn.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred, target_names=iris.target_names)
+
+print(f"\nAccuracy: {accuracy}")
+print("\nConfusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(class_report)
+
+# Visualize the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=iris.target_names, yticklabels=iris.target_names)
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix for K-Nearest Neighbors on Iris Dataset")
+plt.show()
+
+______________________________________________________
+slip 6
+
+Write a python program to implement Polynomial Linear Regression for Boston Housing Dataset. 
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_boston
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Load the Boston Housing dataset
+boston = load_boston()
+
+# Convert the data into a DataFrame
+X = pd.DataFrame(boston.data, columns=boston.feature_names)
+y = pd.Series(boston.target)
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(X.head())
+
+# Split the dataset into training (80%) and testing (20%) sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# We will use 'RM' (average number of rooms per dwelling) as the predictor for simplicity
+# In a real-world scenario, you can use multiple features or all features
+X_train_rm = X_train[['RM']]  # 'RM' is one of the columns in the dataset
+X_test_rm = X_test[['RM']]
+
+# Create a PolynomialFeatures object with degree 2 (quadratic)
+poly = PolynomialFeatures(degree=2)
+
+# Transform the features to include polynomial terms (e.g., X^2)
+X_train_poly = poly.fit_transform(X_train_rm)
+X_test_poly = poly.transform(X_test_rm)
+
+# Create and train the Polynomial Regression model
+model = LinearRegression()
+model.fit(X_train_poly, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test_poly)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"\nMean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Plot the original data vs. the polynomial regression line
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test_rm, y_test, color='blue', label='Actual values')
+plt.plot(X_test_rm, y_pred, color='red', label='Polynomial Regression fit', linewidth=2)
+plt.title("Polynomial Regression on Boston Housing Dataset (Feature: RM)")
+plt.xlabel("Average Number of Rooms per Dwelling (RM)")
+plt.ylabel("House Price (Target Variable)")
+plt.legend()
+plt.show()
+
+______________________________________________________
+
+Use K-means clustering model and classify the employees into various income groups or clusters. Preprocess data if require (i.e. drop missing or null values). 
+
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the employee dataset (replace 'employee_data.csv' with the actual file path)
+data = pd.read_csv('employee_data.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for missing values and drop rows with missing values
+print("\nChecking for missing values:")
+print(data.isnull().sum())
+
+# Drop rows with missing values
+data_cleaned = data.dropna()
+
+# For clustering, we will use features like 'age', 'years_of_experience', and 'income'
+# You can adjust the feature selection based on the dataset
+features = ['age', 'years_of_experience', 'income']  # Modify this as per your dataset
+
+# Extract the features to be used for clustering
+X = data_cleaned[features]
+
+# Standardize the data (important for K-Means to ensure each feature is on a similar scale)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Use the Elbow Method to determine the optimal number of clusters
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=42)
+    kmeans.fit(X_scaled)
+    wcss.append(kmeans.inertia_)
+
+# Plot the Elbow Method to find the optimal number of clusters
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, 11), wcss, marker='o', color='blue')
+plt.title('Elbow Method for Optimal Clusters')
+plt.xlabel('Number of Clusters')
+plt.ylabel('WCSS (Within-Cluster Sum of Squares)')
+plt.show()
+
+# From the Elbow Method, let's say we choose 3 clusters (you can adjust based on the plot)
+kmeans = KMeans(n_clusters=3, init='k-means++', max_iter=300, n_init=10, random_state=42)
+
+# Fit the K-Means model
+data_cleaned['Cluster'] = kmeans.fit_predict(X_scaled)
+
+# Display the first few rows with cluster labels
+print("\nDataset with Cluster Labels:")
+print(data_cleaned[['age', 'years_of_experience', 'income', 'Cluster']].head())
+
+# Visualize the clusters
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='age', y='income', hue='Cluster', data=data_cleaned, palette='viridis', s=100, marker='o')
+plt.title("Employee Income Groups (Clusters) based on Age and Income")
+plt.xlabel("Age")
+plt.ylabel("Income")
+plt.legend(title="Cluster")
+plt.show()
+
+______________________________________________________
+slip 7
+
+Fit the simple linear regression model to Salary_positions.csv data. Predict the salary of level 11 and level 12 employees.
+
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+# Load the Salary_positions dataset
+data = pd.read_csv('Salary_positions.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for any missing values and handle them
+print("\nChecking for missing values:")
+print(data.isnull().sum())
+
+# If there are missing values, you can drop them or fill them (assuming no missing values for now)
+# data = data.dropna()  # Uncomment if needed
+
+# Assuming the dataset has 'Position_Level' and 'Salary' columns (you may need to adjust based on actual column names)
+X = data[['Position_Level']]  # Independent variable (Position level)
+y = data['Salary']  # Dependent variable (Salary)
+
+# Create and fit the Simple Linear Regression model
+model = LinearRegression()
+model.fit(X, y)
+
+# Predict the salary for level 11 and level 12 employees
+levels_to_predict = [[11], [12]]
+salary_predictions = model.predict(levels_to_predict)
+
+# Print the predicted salaries for level 11 and level 12
+print(f"\nPredicted Salary for Level 11: ${salary_predictions[0]:,.2f}")
+print(f"Predicted Salary for Level 12: ${salary_predictions[1]:,.2f}")
+
+# Plot the data and the regression line
+plt.figure(figsize=(10, 6))
+plt.scatter(X, y, color='blue', label='Actual data')
+plt.plot(X, model.predict(X), color='red', label='Regression line')
+plt.scatter(levels_to_predict, salary_predictions, color='green', label='Predictions for Level 11 and 12')
+plt.title('Salary vs Position Level (Simple Linear Regression)')
+plt.xlabel('Position Level')
+plt.ylabel('Salary')
+plt.legend()
+plt.show()
+
+______________________________________________________
+Write a python program to implement Naive Bayes on weather forecast dataset.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Load the weather forecast dataset (replace 'weather_forecast.csv' with your actual dataset file)
+data = pd.read_csv('weather_forecast.csv')
+
+# Display the first few rows of the dataset
+print("Initial Dataset:")
+print(data.head())
+
+# Check for missing values and handle them
+print("\nChecking for missing values:")
+print(data.isnull().sum())
+
+# Handle missing values if needed (e.g., dropping rows with missing values)
+# data = data.dropna()  # Uncomment if missing values are found and need to be removed
+
+# Encode categorical columns (e.g., 'weather', 'wind', 'outlook') using LabelEncoder or pd.get_dummies
+# If the dataset has categorical columns, you can use LabelEncoder for binary columns or one-hot encoding for multi-class columns.
+label_encoder = LabelEncoder()
+
+# Assuming the target column is 'weather' and features are 'temperature', 'humidity', etc.
+# Modify these column names based on your actual dataset.
+data['weather'] = label_encoder.fit_transform(data['weather'])
+
+# Example: Encode other categorical features (e.g., 'outlook', 'wind', 'humidity') if necessary
+data['outlook'] = label_encoder.fit_transform(data['outlook'])
+data['wind'] = label_encoder.fit_transform(data['wind'])
+data['humidity'] = label_encoder.fit_transform(data['humidity'])
+
+# Separate the features and target variable
+X = data.drop('weather', axis=1)  # Features
+y = data['weather']  # Target variable
+
+# Split the dataset into training and testing sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the Naive Bayes model (using GaussianNB for continuous features)
+nb_model = GaussianNB()
+nb_model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = nb_model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+
+print(f"\nAccuracy: {accuracy:.4f}")
+print("\nConfusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(class_report)
+
+# Optionally, visualize the confusion matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(6, 4))
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_)
+plt.title("Confusion Matrix for Naive Bayes (Weather Forecast)")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.show()
+
+______________________________________________________
+slip 8
+
+Write a python program to categorize the given news text into one of the available 20 categories of news groups, using multinomial Naïve Bayes machine learning model.
+
+import numpy as np
+import pandas as pd
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+
+# Load the 20 Newsgroups dataset
+newsgroups = fetch_20newsgroups(subset='all')  # Use 'all' to include both train and test data
+
+# Display the first few rows of the dataset
+print("Sample News Categories:", newsgroups.target_names)
+print("\nFirst few entries in the dataset:")
+for i in range(5):
+    print(f"Category: {newsgroups.target_names[newsgroups.target[i]]}\nText: {newsgroups.data[i][:300]}...\n")
+
+# Extract the features and target variable
+X = newsgroups.data  # Text data
+y = newsgroups.target  # Corresponding target categories
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Convert the text data into numerical form using TfidfVectorizer (alternative: CountVectorizer)
+vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)  # Limit to top 5000 words
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+# Create and train the Multinomial Naive Bayes model
+nb_model = MultinomialNB()
+nb_model.fit(X_train_tfidf, y_train)
+
+# Make predictions on the test set
+y_pred = nb_model.predict(X_test_tfidf)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\nModel Accuracy: {accuracy * 100:.2f}%")
+
+# Display the classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=newsgroups.target_names))
+
+# Predict the category of a new news article
+new_text = "NASA's new rover successfully lands on Mars to study the planet's surface and atmosphere."
+new_text_tfidf = vectorizer.transform([new_text])  # Transform the new text to the same format
+prediction = nb_model.predict(new_text_tfidf)
+
+# Output the predicted category
+print(f"\nPredicted Category for the news text: {newsgroups.target_names[prediction[0]]}")
+
+______________________________________________________
+Write a python program to implement Decision Tree whether or not to play Tennis.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt
+from sklearn import tree
+
+# Sample dataset: Weather conditions and PlayTennis decision
+data = {
+    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast', 'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast', 'Overcast', 'Rain'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool', 'Mild', 'Cool', 'Mild', 'Mild', 'Mild', 'Hot', 'Mild'],
+    'Humidity': ['High', 'High', 'High', 'High', 'High', 'Low', 'Low', 'High', 'Low', 'Low', 'Low', 'High', 'Low', 'High'],
+    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Weak', 'Strong', 'Weak', 'Weak', 'Strong', 'Strong', 'Weak', 'Strong', 'Weak'],
+    'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+}
+
+# Convert the data into a DataFrame
+df = pd.DataFrame(data)
+
+# Display the first few rows of the dataset
+print("Dataset:")
+print(df.head())
+
+# Encode categorical features using LabelEncoder
+le = LabelEncoder()
+
+df['Outlook'] = le.fit_transform(df['Outlook'])
+df['Temperature'] = le.fit_transform(df['Temperature'])
+df['Humidity'] = le.fit_transform(df['Humidity'])
+df['Wind'] = le.fit_transform(df['Wind'])
+df['PlayTennis'] = le.fit_transform(df['PlayTennis'])  # Encoding 'Yes' as 1, 'No' as 0
+
+# Features and target variable
+X = df.drop('PlayTennis', axis=1)  # Features
+y = df['PlayTennis']  # Target variable
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Create and train the Decision Tree model
+clf = DecisionTreeClassifier(criterion='entropy') 
+clf.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = clf.predict(X_test)
+
+# Visualize the Decision Tree
+plt.figure(figsize=(10, 8))
+tree.plot_tree(clf, filled=True, feature_names=X.columns, class_names=['No', 'Yes'], rounded=True)
+plt.title("Decision Tree for PlayTennis Prediction")
+plt.show()
+
+______________________________________________________
+slip 9
+Implement Ridge Regression and Lasso regression model using boston_houses.csv and take only ‘RM’ and ‘Price’ of the houses. Divide the data as training and testing data. Fit line using Ridge regression and to find price of a house if it contains 5 rooms and compare results. 
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Load the dataset (replace the path with the actual file path of boston_houses.csv)
+df = pd.read_csv('boston_houses.csv')
+
+# Display the first few rows to understand the dataset
+print("Dataset Head:")
+print(df.head())
+
+# Extract only the relevant columns 'RM' (rooms) and 'Price' (target)
+df = df[['RM', 'Price']]
+
+# Check for any missing values
+print("\nChecking for missing values:")
+print(df.isnull().sum())
+
+# Split the data into features (X) and target (y)
+X = df[['RM']]  # Features (rooms)
+y = df['Price']  # Target (price)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# --- Ridge Regression ---
+ridge_model = Ridge(alpha=1.0)  # alpha is the regularization strength
+ridge_model.fit(X_train, y_train)
+
+# Make predictions using Ridge Regression
+y_pred_ridge = ridge_model.predict(X_test)
+
+# Calculate the Mean Squared Error for Ridge Regression
+ridge_mse = mean_squared_error(y_test, y_pred_ridge)
+print(f"\nRidge Regression Mean Squared Error: {ridge_mse:.2f}")
+
+# --- Lasso Regression ---
+lasso_model = Lasso(alpha=0.1)  # alpha is the regularization strength
+lasso_model.fit(X_train, y_train)
+
+# Make predictions using Lasso Regression
+y_pred_lasso = lasso_model.predict(X_test)
+
+# Calculate the Mean Squared Error for Lasso Regression
+lasso_mse = mean_squared_error(y_test, y_pred_lasso)
+print(f"\nLasso Regression Mean Squared Error: {lasso_mse:.2f}")
+
+# Compare the results by predicting the price of a house with 5 rooms
+rooms = 5
+pred_ridge = ridge_model.predict([[rooms]])
+pred_lasso = lasso_model.predict([[rooms]])
+
+print(f"\nPredicted price for a house with {rooms} rooms:")
+print(f"Ridge Regression: ${pred_ridge[0]:.2f}")
+print(f"Lasso Regression: ${pred_lasso[0]:.2f}")
+
+# --- Plotting the results ---
+plt.figure(figsize=(10, 6))
+
+# Plot Ridge Regression results
+plt.subplot(1, 2, 1)
+plt.scatter(X_test, y_test, color='blue', label='Actual data')
+plt.plot(X_test, y_pred_ridge, color='red', label='Ridge model prediction')
+plt.title('Ridge Regression')
+plt.xlabel('Number of Rooms (RM)')
+plt.ylabel('Price')
+plt.legend()
+
+# Plot Lasso Regression results
+plt.subplot(1, 2, 2)
+plt.scatter(X_test, y_test, color='blue', label='Actual data')
+plt.plot(X_test, y_pred_lasso, color='green', label='Lasso model prediction')
+plt.title('Lasso Regression')
+plt.xlabel('Number of Rooms (RM)')
+plt.ylabel('Price')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+______________________________________________________
+Write a python program to implement Linear SVM using UniversalBank.csv
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, accuracy_score
+
+# Load the UniversalBank dataset (replace the path with the actual file path)
+df = pd.read_csv('UniversalBank.csv')
+
+# Display the first few rows of the dataset
+print("Dataset Head:")
+print(df.head())
+
+# Check for missing values
+print("\nChecking for missing values:")
+print(df.isnull().sum())
+
+# Assuming 'Personal Loan' is the target variable and the rest are features
+# Let's exclude the 'ID' column and any non-relevant columns
+df = df.drop(columns=['ID'])
+
+# Define the features (X) and the target variable (y)
+X = df.drop(columns=['Personal Loan'])  # Features (all columns except 'Personal Loan')
+y = df['Personal Loan']  # Target variable (whether the person took a personal loan or not)
+
+# Convert categorical features to numerical if they exist (e.g., 'Education' or 'Family')
+X = pd.get_dummies(X, drop_first=True)  # This will automatically handle any categorical variables
+
+# Split the data into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Feature scaling: SVM benefits from feature scaling (standardization)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Create a Linear SVM model
+svm_model = SVC(kernel='linear')
+
+# Train the model
+svm_model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = svm_model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\nAccuracy of Linear SVM: {accuracy * 100:.2f}%")
+
+# Display classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+______________________________________________________
+slip 10
+Write a python program to transform data with Principal Component Analysis (PCA). Use iris dataset. 
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+
+# Load the Iris dataset
+iris = load_iris()
+X = iris.data  # Feature matrix
+y = iris.target  # Target variable
+
+# Standardize the data (important for PCA)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Apply PCA to reduce the dimensions to 2
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+# Convert the PCA result into a DataFrame for easier analysis
+df_pca = pd.DataFrame(data=X_pca, columns=['PC1', 'PC2'])
+df_pca['Target'] = y
+
+# Visualize the results
+plt.figure(figsize=(8,6))
+
+# Scatter plot of the transformed data
+plt.scatter(df_pca['PC1'], df_pca['PC2'], c=df_pca['Target'], cmap='viridis', edgecolor='k', s=100)
+plt.title('PCA of Iris Dataset', fontsize=15)
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+
+# Add legend
+plt.colorbar(label='Target Class')
+plt.show()
+
+# Explained Variance Ratio
+print("Explained variance ratio by each component:")
+print(pca.explained_variance_ratio_)
+
+# Total variance explained by the first two components
+total_variance_explained = np.sum(pca.explained_variance_ratio_)
+print(f"\nTotal variance explained by the first two principal components: {total_variance_explained * 100:.2f}%")
+
+______________________________________________________
+Write a Python program to prepare Scatter Plot for Iris Dataset. Convert Categorical values in to numeric.
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import LabelEncoder
+
+# Step 1: Load the Iris dataset
+iris = load_iris()
+X = iris.data  # Features (sepal length, sepal width, petal length, petal width)
+y = iris.target  # Target labels (species: 0, 1, 2 for setosa, versicolor, virginica)
+
+# Convert to DataFrame for easier manipulation
+df = pd.DataFrame(X, columns=iris.feature_names)
+df['Species'] = y
+
+# Step 2: Convert categorical values (species) to numeric using LabelEncoder
+# In this case, the target is already numeric, but we'll use LabelEncoder to make sure
+label_encoder = LabelEncoder()
+df['Species'] = label_encoder.fit_transform(df['Species'])
+
+# Step 3: Create a scatter plot for two features (e.g., Sepal length vs Sepal width)
+plt.figure(figsize=(8, 6))
+plt.scatter(df['sepal length (cm)'], df['sepal width (cm)'], c=df['Species'], cmap='viridis', edgecolor='k', s=100)
+plt.title('Scatter Plot of Iris Dataset (Sepal Length vs Sepal Width)', fontsize=15)
+plt.xlabel('Sepal Length (cm)')
+plt.ylabel('Sepal Width (cm)')
+
+# Add a color bar with labels for the species
+plt.colorbar(label='Species')
+plt.show()
+
+______________________________________________________
+slip 11
+
+Write a python program to implement Polynomial Regression for Boston Housing Dataset
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_boston
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Load the Boston Housing dataset
+boston = load_boston()
+X = boston.data  # Features
+y = boston.target  # Target (Price)
+
+# Step 2: Preprocess the data (split into training and testing sets)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Optional: Feature Scaling (Scaling is not mandatory for polynomial regression but it can help)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Step 3: Apply Polynomial Features (degree=2 for quadratic)
+poly = PolynomialFeatures(degree=2)
+X_train_poly = poly.fit_transform(X_train_scaled)
+X_test_poly = poly.transform(X_test_scaled)
+
+# Step 4: Train the Polynomial Regression model using Linear Regression
+poly_regressor = LinearRegression()
+poly_regressor.fit(X_train_poly, y_train)
+
+# Step 5: Predict the target values (house prices) using the trained model
+y_pred = poly_regressor.predict(X_test_poly)
+
+# Step 6: Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# Display the results
+print(f"Mean Squared Error: {mse}")
+print(f"R-squared: {r2}")
+
+# Optionally, visualize the results (using a single feature for simplicity in plotting)
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, color='blue')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='red', linestyle='--')
+plt.xlabel('Actual Prices')
+plt.ylabel('Predicted Prices')
+plt.title('Actual vs Predicted Prices using Polynomial Regression')
+plt.show()
+
+______________________________________________________
+
+Write a python program to Implement Decision Tree classifier model on Data which is extracted from images that were taken from genuine and forged banknote-like specimens.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import urllib.request
+
+# Step 1: Load the dataset from UCI repository
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00267/data_banknote_authentication.txt"
+file_name = "banknote_authentication.csv"
+
+# Download the dataset file
+urllib.request.urlretrieve(url, file_name)
+
+# Load the dataset into a pandas DataFrame
+data = pd.read_csv(file_name, header=None)
+
+# Assign column names for better readability
+data.columns = ['Variance', 'Skewness', 'Curtosis', 'Entropy', 'Class']
+
+# Step 2: Preprocess the data
+# Split the dataset into features (X) and target (y)
+X = data[['Variance', 'Skewness', 'Curtosis', 'Entropy']]  # Features
+y = data['Class']  # Target
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 3: Build the Decision Tree Classifier
+clf = DecisionTreeClassifier(random_state=42)
+clf.fit(X_train, y_train)
+
+# Step 4: Make predictions
+y_pred = clf.predict(X_test)
+
+# Step 5: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+
+# Display the results
+print(f"Accuracy: {accuracy * 100:.2f}%")
+print("\nConfusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(class_report)
+
+# Optional: Visualize the Decision Tree (if desired)
+# from sklearn.tree import plot_tree
+# plt.figure(figsize=(12,8))
+# plot_tree(clf, filled=True, feature_names=X.columns, class_names=['Forged', 'Genuine'], rounded=True)
+# plt.show()
+
+______________________________________________________
+slip 12
+Write a python program to implement k-nearest Neighbors ML algorithm to build prediction model (Use iris Dataset).
+
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Step 1: Load the Iris dataset
+iris = load_iris()
+X = iris.data  # Features (sepal length, sepal width, petal length, petal width)
+y = iris.target  # Target labels (species)
+
+# Step 2: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 3: Initialize the KNeighborsClassifier and fit the model
+# Choose k = 3 for this example
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, y_train)
+
+# Step 4: Make predictions
+y_pred = knn.predict(X_test)
+
+# Step 5: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+
+# Display the results
+print(f"Accuracy: {accuracy * 100:.2f}%")
+print("\nConfusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(class_report)
+
+______________________________________________________
+Fit the simple linear regression and polynomial linear regression models to Salary_positions.csv data. Find which one is more accurately fitting to the given data. Also predict the salaries of level 11 and level 12 employees.
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the dataset
+# Make sure to replace this path with your actual file path if needed
+data = pd.read_csv('Salary_positions.csv')
+
+# Step 2: Preprocess the data
+# Extract the relevant columns (Level and Salary)
+X = data['Level'].values.reshape(-1, 1)  # Feature: Level
+y = data['Salary'].values  # Target: Salary
+
+# Split the data into training and testing sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 3: Fit Simple Linear Regression model
+simple_lr = LinearRegression()
+simple_lr.fit(X_train, y_train)
+
+# Predict using Simple Linear Regression
+y_pred_simple = simple_lr.predict(X_test)
+
+# Step 4: Fit Polynomial Linear Regression model
+poly = PolynomialFeatures(degree=2)  # You can change the degree to experiment
+X_poly_train = poly.fit_transform(X_train)
+X_poly_test = poly.transform(X_test)
+
+poly_lr = LinearRegression()
+poly_lr.fit(X_poly_train, y_train)
+
+# Predict using Polynomial Linear Regression
+y_pred_poly = poly_lr.predict(X_poly_test)
+
+# Step 5: Evaluate the models
+# Evaluate Simple Linear Regression
+simple_r2 = r2_score(y_test, y_pred_simple)
+simple_mse = mean_squared_error(y_test, y_pred_simple)
+
+# Evaluate Polynomial Linear Regression
+poly_r2 = r2_score(y_test, y_pred_poly)
+poly_mse = mean_squared_error(y_test, y_pred_poly)
+
+# Step 6: Compare and Print results
+print(f"Simple Linear Regression R2: {simple_r2:.4f}, MSE: {simple_mse:.4f}")
+print(f"Polynomial Linear Regression R2: {poly_r2:.4f}, MSE: {poly_mse:.4f}")
+
+# Step 7: Predict the salaries of Level 11 and Level 12 employees using both models
+level_11 = np.array([[11]])
+level_12 = np.array([[12]])
+
+salary_11_simple = simple_lr.predict(level_11)
+salary_12_simple = simple_lr.predict(level_12)
+
+salary_11_poly = poly_lr.predict(poly.transform(level_11))
+salary_12_poly = poly_lr.predict(poly.transform(level_12))
+
+print(f"Predicted Salary for Level 11 (Simple LR): {salary_11_simple[0]:.2f}")
+print(f"Predicted Salary for Level 12 (Simple LR): {salary_12_simple[0]:.2f}")
+
+print(f"Predicted Salary for Level 11 (Polynomial LR): {salary_11_poly[0]:.2f}")
+print(f"Predicted Salary for Level 12 (Polynomial LR): {salary_12_poly[0]:.2f}")
+
+# Step 8: Plot the results for visualization
+# Plotting Simple Linear Regression
+plt.scatter(X, y, color='red')
+plt.plot(X, simple_lr.predict(X), color='blue', label="Simple Linear Regression")
+plt.title("Simple Linear Regression")
+plt.xlabel("Employee Level")
+plt.ylabel("Salary")
+plt.show()
+
+# Plotting Polynomial Linear Regression
+plt.scatter(X, y, color='red')
+plt.plot(X, poly_lr.predict(poly.transform(X)), color='green', label="Polynomial Linear Regression")
+plt.title("Polynomial Linear Regression")
+plt.xlabel("Employee Level")
+plt.ylabel("Salary")
+plt.show()
+
+______________________________________________________
+slip 13
+
+Create RNN model and analyze the Google stock price dataset. Find out increasing or decreasing trends of stock price for the next day.
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+
+# Step 1: Load the dataset
+# Make sure to replace this path with your actual file path
+data = pd.read_csv('GOOG_stock_data.csv')
+
+# Step 2: Preprocess the data
+# Let's focus on the 'Date' and 'Close' columns for this analysis
+data['Date'] = pd.to_datetime(data['Date'])
+data = data[['Date', 'Close']]
+data.set_index('Date', inplace=True)
+
+# Check if there are any missing values
+print(data.isnull().sum())
+
+# Step 3: Normalize the 'Close' price using Min-Max Scaler
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(data[['Close']])
+
+# Step 4: Create sequences for training
+def create_sequences(data, seq_length):
+    x, y = [], []
+    for i in range(len(data) - seq_length - 1):
+        x.append(data[i:i+seq_length])
+        y.append(data[i+seq_length])
+    return np.array(x), np.array(y)
+
+# Define sequence length (look back for the last 60 days)
+seq_length = 60
+x, y = create_sequences(scaled_data, seq_length)
+
+# Step 5: Split the data into training and testing sets
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, shuffle=False)
+
+# Step 6: Build the RNN model (LSTM)
+model = Sequential()
+
+# Add LSTM layers
+model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], x_train.shape[2])))
+model.add(Dropout(0.2))
+model.add(LSTM(units=50, return_sequences=False))
+model.add(Dropout(0.2))
+
+# Add the output layer
+model.add(Dense(units=1))  # Predicting the closing price
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Step 7: Train the model
+model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
+
+# Step 8: Evaluate the model
+y_pred = model.predict(x_test)
+
+# Step 9: Invert scaling
+y_pred_inverted = scaler.inverse_transform(y_pred)
+y_test_inverted = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+# Step 10: Plot the results
+plt.figure(figsize=(10,6))
+plt.plot(y_test_inverted, color='blue', label='Actual Google Stock Price')
+plt.plot(y_pred_inverted, color='red', label='Predicted Google Stock Price')
+plt.title('Google Stock Price Prediction (RNN)')
+plt.xlabel('Time')
+plt.ylabel('Google Stock Price')
+plt.legend()
+plt.show()
+
+# Step 11: Find if the price will increase or decrease the next day
+# Compare predicted value with today's actual value
+prediction_today = y_pred_inverted[-1]
+prediction_tomorrow = y_pred_inverted[-1]  # The next day's prediction
+
+# Checking if the price will increase or decrease tomorrow
+if prediction_tomorrow > y_test_inverted[-1]:
+    print("The stock price is predicted to increase tomorrow.")
+else:
+    print("The stock price is predicted to decrease tomorrow.")
+
+______________________________________________________
+Write a python program to implement simple Linear Regression for predicting house price.
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the dataset
+# Replace this with your actual dataset path if needed
+data = pd.read_csv('house_prices.csv')
+
+# Step 2: Preprocess the data
+# Let's assume the dataset contains two columns: 'SquareFeet' and 'Price'
+# You can replace these with actual column names based on your dataset
+data = data[['SquareFeet', 'Price']]  # Extract relevant columns
+data.dropna(inplace=True)  # Drop missing values
+
+# Step 3: Split the data into features (X) and target variable (y)
+X = data[['SquareFeet']]  # Feature: SquareFeet (independent variable)
+y = data['Price']  # Target: Price (dependent variable)
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Create a simple linear regression model
+model = LinearRegression()
+
+# Step 6: Train the model on the training data
+model.fit(X_train, y_train)
+
+# Step 7: Make predictions using the test data
+y_pred = model.predict(X_test)
+
+# Step 8: Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# Step 9: Print evaluation metrics
+print(f'Mean Squared Error: {mse}')
+print(f'R-squared: {r2}')
+
+# Step 10: Visualize the results (Scatter plot and Regression line)
+plt.scatter(X_test, y_test, color='blue', label='Actual data')
+plt.plot(X_test, y_pred, color='red', label='Regression line')
+plt.title('Simple Linear Regression - House Prices')
+plt.xlabel('SquareFeet')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
+
+# Step 11: Predicting house price for a new input (e.g., 2000 square feet)
+new_square_feet = np.array([[2000]])  # Example input
+predicted_price = model.predict(new_square_feet)
+print(f'Predicted house price for 2000 square feet: ${predicted_price[0]:,.2f}')
+
+______________________________________________________
+slip 14
+
+Create a CNN model and train it on mnist handwritten digit dataset. Using model find out the digit written by a hand in a given image. Import mnist dataset from tensorflow.keras.datasets
+
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import mnist
+
+# Step 1: Load the MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# Step 2: Preprocess the data
+# Normalize the images to values between 0 and 1
+x_train = x_train.astype('float32') / 255.0
+x_test = x_test.astype('float32') / 255.0
+
+# Reshape the images to (28, 28, 1) to match the input shape for CNN
+x_train = np.expand_dims(x_train, axis=-1)
+x_test = np.expand_dims(x_test, axis=-1)
+
+# Step 3: Create the CNN Model
+model = models.Sequential()
+
+# Add a convolutional layer with 32 filters, kernel size 3x3, and ReLU activation
+model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)))
+# Add a max pooling layer with pool size 2x2
+model.add(layers.MaxPooling2D((2, 2)))
+
+# Add another convolutional layer with 64 filters
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+
+# Add another convolutional layer with 64 filters
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+
+# Flatten the results to feed them into a fully connected layer
+model.add(layers.Flatten())
+# Add a fully connected layer with 64 units and ReLU activation
+model.add(layers.Dense(64, activation='relu'))
+# Add an output layer with 10 units (for 10 classes: 0-9 digits)
+model.add(layers.Dense(10, activation='softmax'))
+
+# Step 4: Compile the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Step 5: Train the model
+model.fit(x_train, y_train, epochs=5, batch_size=64, validation_data=(x_test, y_test))
+
+# Step 6: Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+print(f"Test accuracy: {test_acc:.4f}")
+
+# Step 7: Make predictions on the test data
+predictions = model.predict(x_test)
+
+# Step 8: Display a sample image and its predicted label
+index = 0  # Choose the index of the test image you want to predict
+plt.imshow(x_test[index].reshape(28, 28), cmap='gray')
+plt.title(f"Predicted Label: {np.argmax(predictions[index])}")
+plt.show()
+
+# Example: Predict the digit for a given image
+# Load an image (for example purposes, we'll use the first image in the test set)
+image = x_test[index].reshape(1, 28, 28, 1)
+predicted_digit = model.predict(image)
+print(f"Predicted digit: {np.argmax(predicted_digit)}")
+
+______________________________________________________
+Write a python program to find all null values in a given dataset and remove them. Create your own dataset.
+
+import pandas as pd
+import numpy as np
+
+# Step 1: Create a sample dataset
+data = {
+    'Name': ['John', 'Anna', 'Peter', 'Linda', np.nan],
+    'Age': [28, 24, 35, 40, np.nan],
+    'City': ['New York', 'London', 'Berlin', np.nan, 'Paris'],
+    'Salary': [70000, 75000, 80000, 120000, 90000]
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Step 2: Display the original dataset with null values
+print("Original Dataset with Null Values:")
+print(df)
+
+# Step 3: Identify null values
+print("\nNull Values in the Dataset:")
+print(df.isnull().sum())  # This will give the count of null values in each column
+
+# Step 4: Remove rows with any null values
+df_cleaned = df.dropna()
+
+# Step 5: Display the cleaned dataset after removing null values
+print("\nDataset After Removing Null Values:")
+print(df_cleaned)
+
+______________________________________________________
+slip 15
+
+Create an ANN and train it on house price dataset classify the house price is above average or below average.
+
+import numpy as np
+import pandas as pd
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Create a sample house price dataset
+data = {
+    'Size': [1500, 1800, 2400, 3000, 3500, 4000, 2200, 2800, 3200, 2600],  # House size in sqft
+    'Bedrooms': [3, 4, 3, 5, 4, 5, 3, 4, 4, 3],  # Number of bedrooms
+    'Age': [10, 15, 8, 20, 12, 5, 30, 7, 18, 6],  # Age of the house in years
+    'Price': [400000, 500000, 550000, 600000, 650000, 700000, 300000, 480000, 540000, 520000]  # House price in USD
+}
+
+# Convert the data into a pandas DataFrame
+df = pd.DataFrame(data)
+
+# Step 2: Preprocess the data
+# Calculate the average price and classify houses as above average or below average
+average_price = df['Price'].mean()
+df['Price Class'] = np.where(df['Price'] > average_price, 1, 0)  # 1 for above average, 0 for below average
+
+# Features and target
+X = df[['Size', 'Bedrooms', 'Age']]  # Features: Size, Bedrooms, Age
+y = df['Price Class']  # Target: Price Class (above or below average)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 3: Normalize the features using StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 4: Build the Artificial Neural Network (ANN) model
+model = Sequential()
+
+# Input layer with 3 features (Size, Bedrooms, Age)
+model.add(Dense(units=10, activation='relu', input_dim=3))
+
+# Hidden layer with 10 neurons
+model.add(Dense(units=10, activation='relu'))
+
+# Output layer with 1 neuron (binary classification)
+model.add(Dense(units=1, activation='sigmoid'))
+
+# Step 5: Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Step 6: Train the model
+model.fit(X_train, y_train, epochs=100, batch_size=4, verbose=1)
+
+# Step 7: Evaluate the model on the test set
+test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
+print(f'Test accuracy: {test_acc:.4f}')
+
+# Step 8: Make predictions on the test data
+predictions = (model.predict(X_test) > 0.5).astype('int32')  # Convert probabilities to 0 or 1
+
+# Display predictions
+print(f'Predictions on Test Data: {predictions.flatten()}')
+
+______________________________________________________
+Write a python program to implement multiple Linear Regression for a house price dataset.
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Create a sample house price dataset
+data = {
+    'Size': [1500, 1800, 2400, 3000, 3500, 4000, 2200, 2800, 3200, 2600],  # House size in sqft
+    'Bedrooms': [3, 4, 3, 5, 4, 5, 3, 4, 4, 3],  # Number of bedrooms
+    'Age': [10, 15, 8, 20, 12, 5, 30, 7, 18, 6],  # Age of the house in years
+    'Price': [400000, 500000, 550000, 600000, 650000, 700000, 300000, 480000, 540000, 520000]  # House price in USD
+}
+
+# Convert the data into a pandas DataFrame
+df = pd.DataFrame(data)
+
+# Step 2: Preprocess the data
+# Features: Size, Bedrooms, Age
+X = df[['Size', 'Bedrooms', 'Age']]
+
+# Target: Price
+y = df['Price']
+
+# Split the data into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Optional: Standardize the features using StandardScaler for better performance with some models
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 3: Create the Multiple Linear Regression model
+model = LinearRegression()
+
+# Step 4: Train the model on the training data
+model.fit(X_train, y_train)
+
+# Step 5: Make predictions on the test data
+y_pred = model.predict(X_test)
+
+# Step 6: Evaluate the model
+# Calculate Mean Squared Error (MSE) and R^2 score
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Step 7: Predict the price for new data (e.g., for a house with size 3000 sqft, 4 bedrooms, and 10 years old)
+new_data = np.array([[3000, 4, 10]])
+new_data_scaled = scaler.transform(new_data)  # Scaling the new data based on the same scaler used during training
+predicted_price = model.predict(new_data_scaled)
+
+print(f"Predicted Price for a house with 3000 sqft, 4 bedrooms, and 10 years old: ${predicted_price[0]:,.2f}")
+
+______________________________________________________
+slip 16
+
+Create a two layered neural network with relu and sigmoid activation function. 
+
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+# Step 1: Create a synthetic binary classification dataset
+X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, random_state=42)
+
+# Step 2: Preprocess the data
+# Split the data into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 3: Standardize the features using StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 4: Build the Neural Network model with 2 layers
+model = Sequential()
+
+# First hidden layer with 32 neurons and ReLU activation function
+model.add(Dense(units=32, activation='relu', input_dim=X_train.shape[1]))
+
+# Output layer with 1 neuron and Sigmoid activation function (binary classification)
+model.add(Dense(units=1, activation='sigmoid'))
+
+# Step 5: Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Step 6: Train the model
+model.fit(X_train, y_train, epochs=20, batch_size=32, verbose=1)
+
+# Step 7: Evaluate the model on the test set
+y_pred = (model.predict(X_test) > 0.5).astype('int32')
+
+# Step 8: Calculate accuracy on the test set
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Test Accuracy: {accuracy:.4f}')
+
+______________________________________________________
+
+Write a python program to implement Simple Linear Regression for Boston housing dataset. 
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.datasets import load_boston
+import matplotlib.pyplot as plt
+
+# Step 1: Load the Boston Housing dataset
+boston = load_boston()
+
+# Convert the dataset into a pandas DataFrame for easy manipulation
+data = pd.DataFrame(boston.data, columns=boston.feature_names)
+data['PRICE'] = boston.target  # Add the target variable (Price)
+
+# Step 2: Preprocess the data (Select only one feature for Simple Linear Regression)
+# Here, we will use 'RM' (average number of rooms per dwelling) as the feature for simple linear regression
+X = data[['RM']]  # Feature: average number of rooms
+y = data['PRICE']  # Target: House price
+
+# Step 3: Split the data into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Create and train the Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Step 5: Make predictions on the test data
+y_pred = model.predict(X_test)
+
+# Step 6: Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse}")
+print(f"R^2 Score: {r2}")
+
+# Step 7: Visualize the results (Plot the regression line)
+plt.scatter(X_test, y_test, color='blue', label='Actual data')  # Actual data points
+plt.plot(X_test, y_pred, color='red', linewidth=2, label='Regression line')  # Regression line
+plt.title('Simple Linear Regression: House Price vs Average Number of Rooms')
+plt.xlabel('Average Number of Rooms')
+plt.ylabel('House Price')
+plt.legend()
+plt.show()
+
+# Step 8: Predict house price for a new data point (e.g., house with 6 rooms)
+new_data = np.array([[6]])  # New house with 6 rooms
+predicted_price = model.predict(new_data)
+print(f"Predicted price for a house with 6 rooms: ${predicted_price[0]:,.2f}")
+
+______________________________________________________
+slip 17
+
+Implement Ensemble ML algorithm on Pima Indians Diabetes Database with bagging (random forest), boosting, voting and Stacking methods and display analysis accordingly. Compare result.
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, VotingClassifier, StackingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.datasets import load_diabetes
+import matplotlib.pyplot as plt
+
+# Step 1: Load the Pima Indians Diabetes Dataset
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
+data = pd.read_csv(url, names=columns)
+
+# Step 2: Preprocess the data
+# Features and target
+X = data.drop('Outcome', axis=1)
+y = data['Outcome']
+
+# Split the data into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Scale the features (Standardization)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 3: Define base models for Stacking and Voting
+model_rf = RandomForestClassifier(n_estimators=100, random_state=42)
+model_ab = AdaBoostClassifier(n_estimators=100, random_state=42)
+model_svc = SVC(kernel='linear', probability=True, random_state=42)
+model_lr = LogisticRegression(random_state=42)
+
+# Step 4: Bagging with Random Forest (model_rf)
+model_rf.fit(X_train, y_train)
+y_pred_rf = model_rf.predict(X_test)
+accuracy_rf = accuracy_score(y_test, y_pred_rf)
+
+# Step 5: Boosting with AdaBoost (model_ab)
+model_ab.fit(X_train, y_train)
+y_pred_ab = model_ab.predict(X_test)
+accuracy_ab = accuracy_score(y_test, y_pred_ab)
+
+# Step 6: Voting Classifier (model_voting)
+voting_clf = VotingClassifier(estimators=[('rf', model_rf), ('ab', model_ab), ('svc', model_svc)], voting='hard')
+voting_clf.fit(X_train, y_train)
+y_pred_voting = voting_clf.predict(X_test)
+accuracy_voting = accuracy_score(y_test, y_pred_voting)
+
+# Step 7: Stacking Classifier (model_stacking)
+stacking_clf = StackingClassifier(estimators=[('rf', model_rf), ('ab', model_ab), ('svc', model_svc)], final_estimator=model_lr)
+stacking_clf.fit(X_train, y_train)
+y_pred_stacking = stacking_clf.predict(X_test)
+accuracy_stacking = accuracy_score(y_test, y_pred_stacking)
+
+# Step 8: Print accuracy results
+print(f"Accuracy of Random Forest (Bagging): {accuracy_rf:.4f}")
+print(f"Accuracy of AdaBoost (Boosting): {accuracy_ab:.4f}")
+print(f"Accuracy of Voting Classifier: {accuracy_voting:.4f}")
+print(f"Accuracy of Stacking Classifier: {accuracy_stacking:.4f}")
+
+# Step 9: Plot Comparison
+methods = ['Random Forest (Bagging)', 'AdaBoost (Boosting)', 'Voting Classifier', 'Stacking Classifier']
+accuracies = [accuracy_rf, accuracy_ab, accuracy_voting, accuracy_stacking]
+
+plt.barh(methods, accuracies, color='skyblue')
+plt.xlabel('Accuracy')
+plt.title('Ensemble Methods Comparison')
+plt.show()
+
+______________________________________________________
+Write a python program to implement Multiple Linear Regression for a house price dataset
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Step 1: Load the House Price Dataset
+# For this example, I will use the Boston Housing dataset available in sklearn
+from sklearn.datasets import load_boston
+
+# Load the Boston Housing dataset
+boston = load_boston()
+data = pd.DataFrame(boston.data, columns=boston.feature_names)
+data['PRICE'] = boston.target  # Add target variable
+
+# Step 2: Preprocess the Data
+X = data.drop('PRICE', axis=1)  # Features
+y = data['PRICE']  # Target variable
+
+# Step 3: Split the Data into Training and Testing Sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Feature Scaling (Standardize the features for better performance)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 5: Create and Train the Multiple Linear Regression Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Step 6: Make Predictions on the Test Set
+y_pred = model.predict(X_test)
+
+# Step 7: Evaluate the Model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse:.4f}")
+print(f"R^2 Score: {r2:.4f}")
+
+# Step 8: Visualizing the Results (Plot Actual vs Predicted)
+plt.scatter(y_test, y_pred, color='blue', label='Actual vs Predicted')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='red', lw=2)  # Ideal line
+plt.xlabel('Actual Prices')
+plt.ylabel('Predicted Prices')
+plt.title('Actual vs Predicted House Prices')
+plt.legend()
+plt.show()
+
+# Step 9: Predict house price for a new data point (optional)
+new_data = np.array([[0.1, 18.0, 3.0, 0.0, 0.0, 6.0, 50.0, 4.0, 6.0, 270.0, 15.0, 384.0, 12.0]])  # Example features
+new_data_scaled = scaler.transform(new_data)  # Scale the new data
+predicted_price = model.predict(new_data_scaled)
+print(f"Predicted house price for the new data: ${predicted_price[0]:,.2f}")
+
+______________________________________________________
+slip 18
+
+Write a python program to implement k-means algorithm on a Diabetes dataset.
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+
+# Step 1: Load the Diabetes dataset (Pima Indians Diabetes dataset)
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 
+           'DiabetesPedigreeFunction', 'Age', 'Outcome']
+
+data = pd.read_csv(url, names=columns)
+
+# Step 2: Preprocess the data
+# Features (X) and target (y) are separated, but we will only use the features for clustering
+X = data.drop('Outcome', axis=1)
+
+# Step 3: Feature Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)  # Scaling the features for better clustering performance
+
+# Step 4: Apply K-Means clustering
+# Let's assume 2 clusters initially, you can change the value of n_clusters as per your requirement.
+kmeans = KMeans(n_clusters=2, random_state=42)
+kmeans.fit(X_scaled)
+
+# Step 5: Get the cluster labels and centers
+labels = kmeans.labels_
+centers = kmeans.cluster_centers_
+
+# Step 6: Evaluate the Clustering Performance using Silhouette Score
+sil_score = silhouette_score(X_scaled, labels)
+print(f"Silhouette Score: {sil_score:.4f}")
+
+# Step 7: Visualize the Clusters (We will reduce to 2D using PCA for visualization)
+from sklearn.decomposition import PCA
+
+# Reduce the dimensions to 2D for visualization purposes
+pca = PCA(n_components=2)
+X_2d = pca.fit_transform(X_scaled)
+
+# Plot the clusters
+plt.figure(figsize=(8, 6))
+plt.scatter(X_2d[labels == 0, 0], X_2d[labels == 0, 1], s=30, color='blue', label='Cluster 1')
+plt.scatter(X_2d[labels == 1, 0], X_2d[labels == 1, 1], s=30, color='red', label='Cluster 2')
+
+# Plot the centroids
+plt.scatter(pca.transform(centers)[:, 0], pca.transform(centers)[:, 1], s=200, color='black', marker='x', label='Centroids')
+
+plt.title("K-Means Clustering on Diabetes Dataset")
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.legend()
+plt.show()
+
+______________________________________________________
+Write a python program to implement Polynomial Linear Regression for salary_positions dataset. 
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the Salary Positions dataset (You can replace this with your actual dataset)
+# Sample dataset structure with 'Position' and 'Salary'
+data = pd.DataFrame({
+    'Position': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    'Salary': [40000, 42000, 50000, 60000, 75000, 85000, 100000, 120000, 140000, 160000]
+})
+
+# Step 2: Preprocess the Data
+X = data[['Position']].values  # Feature (Position)
+y = data['Salary'].values  # Target (Salary)
+
+# Step 3: Split the Data into Training and Test Sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Apply Polynomial Feature Transformation (e.g., degree 3)
+poly = PolynomialFeatures(degree=3)
+X_poly_train = poly.fit_transform(X_train)
+X_poly_test = poly.transform(X_test)
+
+# Step 5: Train the Polynomial Linear Regression Model
+poly_reg_model = LinearRegression()
+poly_reg_model.fit(X_poly_train, y_train)
+
+# Step 6: Predict the Results
+y_pred = poly_reg_model.predict(X_poly_test)
+
+# Step 7: Evaluate the Model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"Mean Squared Error: {mse:.4f}")
+print(f"R^2 Score: {r2:.4f}")
+
+# Step 8: Visualize the Polynomial Regression Result (for better understanding)
+plt.scatter(X, y, color='blue', label='Actual Data')
+plt.plot(X, poly_reg_model.predict(poly.transform(X)), color='red', label='Polynomial Regression')
+plt.title('Polynomial Regression - Salary vs Position')
+plt.xlabel('Position Level')
+plt.ylabel('Salary')
+plt.legend()
+plt.show()
+
+# Step 9: Predict Salary for a new position level (Example: level 6.5)
+new_position = np.array([[6.5]])
+predicted_salary = poly_reg_model.predict(poly.transform(new_position))
+print(f"Predicted salary for position level 6.5: ${predicted_salary[0]:,.2f}")
+
+______________________________________________________
+slip 19
+
+Fit the simple linear regression and polynomial linear regression models to Salary_positions.csv data. Find which one is more accurately fitting to the given data. Also predict the salaries of level 11 and level 12 employees.
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the Salary Positions dataset
+# Replace this path with your actual file path
+data = pd.read_csv('Salary_positions.csv')
+
+# Inspect the first few rows of the data
+print(data.head())
+
+# Step 2: Preprocess the Data
+X = data[['Position']].values  # Feature (Position)
+y = data['Salary'].values  # Target (Salary)
+
+# Step 3: Fit the Simple Linear Regression model
+simple_lr = LinearRegression()
+simple_lr.fit(X, y)
+
+# Step 4: Fit the Polynomial Linear Regression model (degree 3)
+poly = PolynomialFeatures(degree=3)
+X_poly = poly.fit_transform(X)
+
+poly_lr = LinearRegression()
+poly_lr.fit(X_poly, y)
+
+# Step 5: Predict salaries using both models
+y_pred_simple = simple_lr.predict(X)
+y_pred_poly = poly_lr.predict(X_poly)
+
+# Step 6: Evaluate the models
+mse_simple = mean_squared_error(y, y_pred_simple)
+mse_poly = mean_squared_error(y, y_pred_poly)
+
+r2_simple = r2_score(y, y_pred_simple)
+r2_poly = r2_score(y, y_pred_poly)
+
+print(f"Simple Linear Regression - MSE: {mse_simple:.4f}, R^2: {r2_simple:.4f}")
+print(f"Polynomial Linear Regression - MSE: {mse_poly:.4f}, R^2: {r2_poly:.4f}")
+
+# Step 7: Visualize the results
+plt.figure(figsize=(10, 6))
+
+# Plot Simple Linear Regression
+plt.subplot(1, 2, 1)
+plt.scatter(X, y, color='blue', label='Actual Data')
+plt.plot(X, y_pred_simple, color='red', label='Simple Linear Regression')
+plt.title('Simple Linear Regression')
+plt.xlabel('Position Level')
+plt.ylabel('Salary')
+plt.legend()
+
+# Plot Polynomial Linear Regression
+plt.subplot(1, 2, 2)
+plt.scatter(X, y, color='blue', label='Actual Data')
+plt.plot(X, y_pred_poly, color='green', label='Polynomial Linear Regression')
+plt.title('Polynomial Linear Regression (Degree 3)')
+plt.xlabel('Position Level')
+plt.ylabel('Salary')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Step 8: Predict salaries for Position Levels 11 and 12
+new_positions = np.array([[11], [12]])
+salary_pred_simple = simple_lr.predict(new_positions)
+salary_pred_poly = poly_lr.predict(poly.transform(new_positions))
+
+print(f"Predicted salary for position 11 (Simple LR): ${salary_pred_simple[0]:,.2f}")
+print(f"Predicted salary for position 12 (Simple LR): ${salary_pred_simple[1]:,.2f}")
+print(f"Predicted salary for position 11 (Polynomial LR): ${salary_pred_poly[0]:,.2f}")
+print(f"Predicted salary for position 12 (Polynomial LR): ${salary_pred_poly[1]:,.2f}")
+
+______________________________________________________
+Write a python program to implement Naive Bayes on weather forecast dataset.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+# Step 1: Load the weather forecast dataset
+# Replace this with the path to your actual dataset
+data = pd.read_csv('weather_forecast.csv')
+
+# Display the first few rows of the dataset
+print(data.head())
+
+# Step 2: Preprocess the data
+# Convert categorical columns into numeric format (if necessary)
+# For example, assume 'Outlook' and 'Rain' are categorical columns
+
+# Encoding categorical variables using LabelEncoder
+label_encoder = LabelEncoder()
+
+# Let's assume the dataset has columns like 'Outlook', 'Temperature', and 'Rain'
+data['Outlook'] = label_encoder.fit_transform(data['Outlook'])  # Example categorical column
+data['Rain'] = label_encoder.fit_transform(data['Rain'])  # Target variable
+
+# Step 3: Split the data into features (X) and target (y)
+X = data[['Outlook', 'Temperature']]  # Example features
+y = data['Rain']  # Target variable (whether it rains or not)
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Train the Naive Bayes model
+naive_bayes = GaussianNB()
+naive_bayes.fit(X_train, y_train)
+
+# Step 6: Make predictions on the test set
+y_pred = naive_bayes.predict(X_test)
+
+# Step 7: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+print(f"Accuracy: {accuracy * 100:.2f}%")
+print("Confusion Matrix:")
+print(conf_matrix)
+
+# Optional: Visualize the results (if necessary)
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Plotting the confusion matrix
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=["No Rain", "Rain"], yticklabels=["No Rain", "Rain"])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix for Naive Bayes')
+plt.show()
+
+______________________________________________________
+slip 20
+
+Implement Ridge Regression, Lasso regression model using boston_houses.csv and take only ‘RM’ and ‘Price’ of the houses. divide the data as training and testing data. Fit line using Ridge regression and to find price of a house if it contains 5 rooms. and compare results.
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+# Step 1: Load the Boston Housing dataset
+# Replace with your dataset path
+data = pd.read_csv('boston_houses.csv')
+
+# Step 2: Preprocess the data (Select 'RM' and 'Price')
+X = data[['RM']].values  # Features: average number of rooms (RM)
+y = data['Price'].values  # Target: house price
+
+# Step 3: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Train the Ridge Regression model
+ridge = Ridge(alpha=1.0)
+ridge.fit(X_train, y_train)
+
+# Train the Lasso Regression model
+lasso = Lasso(alpha=0.1)
+lasso.fit(X_train, y_train)
+
+# Step 5: Make predictions using both models
+y_pred_ridge = ridge.predict(X_test)
+y_pred_lasso = lasso.predict(X_test)
+
+# Step 6: Evaluate the models
+mse_ridge = mean_squared_error(y_test, y_pred_ridge)
+mse_lasso = mean_squared_error(y_test, y_pred_lasso)
+
+r2_ridge = r2_score(y_test, y_pred_ridge)
+r2_lasso = r2_score(y_test, y_pred_lasso)
+
+print(f"Ridge Regression - MSE: {mse_ridge:.4f}, R^2: {r2_ridge:.4f}")
+print(f"Lasso Regression - MSE: {mse_lasso:.4f}, R^2: {r2_lasso:.4f}")
+
+# Step 7: Predict the price of a house with 5 rooms using both models
+price_ridge = ridge.predict(np.array([[5]]))  # Predict for 5 rooms
+price_lasso = lasso.predict(np.array([[5]]))  # Predict for 5 rooms
+
+print(f"Predicted price for a house with 5 rooms (Ridge Regression): ${price_ridge[0]:,.2f}")
+print(f"Predicted price for a house with 5 rooms (Lasso Regression): ${price_lasso[0]:,.2f}")
+
+# Step 8: Visualize the results
+plt.figure(figsize=(10, 6))
+
+# Plot Ridge Regression
+plt.subplot(1, 2, 1)
+plt.scatter(X_test, y_test, color='blue', label='Actual Data')
+plt.plot(X_test, y_pred_ridge, color='red', label='Ridge Regression Line')
+plt.title('Ridge Regression')
+plt.xlabel('Number of Rooms')
+plt.ylabel('Price')
+plt.legend()
+
+# Plot Lasso Regression
+plt.subplot(1, 2, 2)
+plt.scatter(X_test, y_test, color='blue', label='Actual Data')
+plt.plot(X_test, y_pred_lasso, color='green', label='Lasso Regression Line')
+plt.title('Lasso Regression')
+plt.xlabel('Number of Rooms')
+plt.ylabel('Price')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+______________________________________________________
+Write a python program to implement Decision Tree whether or not to play Tennis.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+
+# Step 1: Create the dataset
+data = {
+    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast', 'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast', 'Overcast', 'Rain'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool', 'Mild', 'Mild', 'Mild', 'Hot', 'Mild', 'Mild', 'Hot'],
+    'Humidity': ['High', 'High', 'High', 'High', 'High', 'Low', 'Low', 'High', 'Low', 'Low', 'Low', 'Low', 'High', 'High'],
+    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Weak', 'Strong', 'Strong', 'Weak'],
+    'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+}
+
+# Step 2: Convert categorical data into numerical values
+# We can use pd.get_dummies to convert categorical variables into dummy/indicator variables
+df = pd.DataFrame(data)
+
+# Convert categorical variables into numeric form using one-hot encoding
+df_encoded = pd.get_dummies(df.drop(columns=['PlayTennis']), drop_first=True)
+
+# The target variable
+y = df['PlayTennis'].apply(lambda x: 1 if x == 'Yes' else 0)  # 'Yes' -> 1, 'No' -> 0
+
+# Step 3: Split the dataset into training and testing sets
+X = df_encoded
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 4: Train the Decision Tree classifier
+model = DecisionTreeClassifier(criterion='entropy')  # Using 'entropy' for Information Gain
+model.fit(X_train, y_train)
+
+# Step 5: Make predictions
+y_pred = model.predict(X_test)
+
+# Step 6: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the Decision Tree model: {accuracy * 100:.2f}%")
+
+# Step 7: Visualize the decision tree
+plt.figure(figsize=(12,8))
+plot_tree(model, filled=True, feature_names=X.columns, class_names=['No', 'Yes'], fontsize=10)
+plt.title('Decision Tree for Play Tennis Prediction')
+plt.show()
+
+# Step 8: Make a prediction
+# Example: Let's predict whether we should play tennis when the Outlook is Sunny, Temperature is Mild,
+# Humidity is Low, and Wind is Weak
+input_data = pd.DataFrame({
+    'Outlook_Sunny': [1],
+    'Temperature_Mild': [1],
+    'Humidity_Low': [1],
+    'Wind_Weak': [1]
+})
+
+prediction = model.predict(input_data)
+result = 'Yes' if prediction[0] == 1 else 'No'
+print(f"Prediction for playing tennis with given conditions: {result}")
+
+______________________________________________________
+slip 21
+
+Create a multiple linear regression model for house price dataset divide dataset into train and test data while giving it to model and predict prices of house. 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Create or load the dataset (For example purposes, we are creating a dataset)
+data = {
+    'SquareFeet': [1500, 1800, 2400, 3000, 3500, 4000, 4500, 5000],
+    'Bedrooms': [3, 4, 3, 5, 4, 5, 6, 6],
+    'Bathrooms': [2, 3, 3, 4, 3, 4, 4, 5],
+    'Age': [10, 15, 20, 5, 30, 25, 35, 10],
+    'Price': [400000, 500000, 600000, 700000, 750000, 850000, 900000, 1000000]
+}
+
+# Step 2: Convert the data into a pandas DataFrame
+df = pd.DataFrame(data)
+
+# Step 3: Split the data into features (X) and target variable (y)
+X = df[['SquareFeet', 'Bedrooms', 'Bathrooms', 'Age']]  # Features
+y = df['Price']  # Target variable (Price)
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Create and train the Multiple Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Step 6: Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Step 7: Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse}")
+print(f"R-squared: {r2}")
+
+# Step 8: Predict the house prices for new data (example)
+new_data = pd.DataFrame({
+    'SquareFeet': [3500, 2500],
+    'Bedrooms': [5, 3],
+    'Bathrooms': [4, 3],
+    'Age': [15, 20]
+})
+
+new_predictions = model.predict(new_data)
+print(f"Predicted Prices for new houses: {new_predictions}")
+
+______________________________________________________
+Write a python program to implement Linear SVM using UniversalBank.csv
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
+from sklearn.metrics import accuracy_score, classification_report
+
+# Step 1: Load the dataset
+# Assuming UniversalBank.csv is available and contains necessary columns.
+df = pd.read_csv('UniversalBank.csv')
+
+# Step 2: Data Preprocessing
+# Check for missing values and handle them
+df.isnull().sum()
+
+df.dropna() 
+
+# Separate features (X) and target variable (y)
+# Assuming the target variable is 'PersonalLoan' (1: Yes, 0: No)
+X = df.drop(columns=['PersonalLoan'])  # Features
+y = df['PersonalLoan']  # Target variable
+
+# Convert categorical columns into numeric form if any
+# For example, let's say there is a 'State' column which needs encoding
+X = pd.get_dummies(X, drop_first=True)  # This will convert categorical variables to dummies
+
+# Step 3: Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 4: Feature Scaling (SVM is sensitive to feature scales)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 5: Create and train the Linear SVM model
+svm_model = LinearSVC(random_state=42)
+svm_model.fit(X_train, y_train)
+
+# Step 6: Make predictions on the test set
+y_pred = svm_model.predict(X_test)
+
+# Step 7: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of Linear SVM: {accuracy * 100:.2f}%")
+
+# Detailed classification report
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+
+______________________________________________________
+slip 22
+
+Write a python program to implement simple Linear Regression for predicting house price. 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+# Step 1: Create or load the dataset
+# For simplicity, we create a small dataset with house square footage and corresponding prices
+data = {
+    'SquareFeet': [1500, 1800, 2400, 3000, 3500, 4000, 4500, 5000],
+    'Price': [400000, 500000, 600000, 700000, 750000, 850000, 900000, 1000000]
+}
+
+# Step 2: Convert the data into a pandas DataFrame
+df = pd.DataFrame(data)
+
+# Step 3: Split the data into features (X) and target variable (y)
+X = df[['SquareFeet']]  # Feature (square footage)
+y = df['Price']  # Target variable (price)
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Create the Simple Linear Regression model
+model = LinearRegression()
+
+# Step 6: Train the model using the training data
+model.fit(X_train, y_train)
+
+# Step 7: Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Step 8: Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse}")
+print(f"R-squared: {r2}")
+
+# Step 9: Visualize the data and the regression line
+plt.scatter(X, y, color='blue')  # Plot the actual data points
+plt.plot(X, model.predict(X), color='red')  # Plot the regression line
+plt.xlabel('Square Feet')
+plt.ylabel('Price')
+plt.title('Simple Linear Regression: House Price Prediction')
+plt.show()
+
+# Step 10: Predict house price for a new value of square footage (e.g., 2500 square feet)
+new_sqft = 2500
+predicted_price = model.predict([[new_sqft]])
+print(f"The predicted price for a house with {new_sqft} square feet is ${predicted_price[0]:,.2f}")
+
+______________________________________________________
+Use Apriori algorithm on groceries dataset to find which items are brought together. Use minimum support =0.25
+
+import pandas as pd
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# Each row represents a transaction, and columns represent items.
+data = {
+    'Milk': [1, 1, 0, 1, 1, 0],
+    'Bread': [1, 1, 1, 1, 0, 0],
+    'Butter': [1, 0, 1, 1, 1, 0],
+    'Cheese': [0, 1, 1, 0, 1, 1],
+    'Yogurt': [1, 1, 1, 0, 0, 1]
+}
+
+df = pd.DataFrame(data)
+
+# Set minimum support to 0.25 (i.e., items bought in at least 25% of the transactions)
+frequent_itemsets = apriori(df, min_support=0.25, use_colnames=True)
+
+# Set minimum lift to 1 for simplicity
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+
+print("Frequent Itemsets:\n", frequent_itemsets)
+print("\nAssociation Rules:\n", rules)
+
+______________________________________________________
+slip 23
+
+Fit the simple linear regression and polynomial linear regression models to Salary_positions.csv data. Find which one is more accurately fitting to the given data. Also predict the salaries of level 11 and level 12 employees.
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the dataset
+# Replace this with the actual path to your CSV file
+df = pd.read_csv('Salary_positions.csv')
+
+# Step 2: Inspect the dataset (print the first few rows)
+print(df.head())
+
+# Step 3: Prepare the data (assuming 'Level' is the independent variable and 'Salary' is the dependent variable)
+X = df['Level'].values.reshape(-1, 1)  # Reshape for single feature (Level)
+y = df['Salary'].values
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Step 5: Simple Linear Regression
+linear_regressor = LinearRegression()
+linear_regressor.fit(X_train, y_train)
+
+# Predict using the linear regression model
+y_pred_linear = linear_regressor.predict(X_test)
+
+# Evaluate the linear regression model
+mse_linear = mean_squared_error(y_test, y_pred_linear)
+r2_linear = r2_score(y_test, y_pred_linear)
+print(f"Linear Regression - Mean Squared Error: {mse_linear}")
+print(f"Linear Regression - R² Score: {r2_linear}")
+
+# Step 6: Polynomial Linear Regression (degree=4 for example)
+poly_features = PolynomialFeatures(degree=4)
+X_poly = poly_features.fit_transform(X)
+
+# Split the data for polynomial regression
+X_poly_train, X_poly_test, y_poly_train, y_poly_test = train_test_split(X_poly, y, test_size=0.2, random_state=0)
+
+# Fit the Polynomial Regression model
+poly_regressor = LinearRegression()
+poly_regressor.fit(X_poly_train, y_poly_train)
+
+# Predict using the polynomial regression model
+y_pred_poly = poly_regressor.predict(X_poly_test)
+
+# Evaluate the polynomial regression model
+mse_poly = mean_squared_error(y_poly_test, y_pred_poly)
+r2_poly = r2_score(y_poly_test, y_pred_poly)
+print(f"Polynomial Regression - Mean Squared Error: {mse_poly}")
+print(f"Polynomial Regression - R² Score: {r2_poly}")
+
+# Step 7: Visualize the results (Linear Regression vs Polynomial Regression)
+plt.figure(figsize=(10, 6))
+
+# Linear regression visualization
+plt.scatter(X, y, color='red')
+plt.plot(X, linear_regressor.predict(X), color='blue', label='Linear Regression')
+
+# Polynomial regression visualization
+X_grid = np.arange(min(X), max(X), 0.1)
+X_grid = X_grid.reshape((len(X_grid), 1))
+plt.plot(X_grid, poly_regressor.predict(poly_features.fit_transform(X_grid)), color='green', label='Polynomial Regression')
+
+plt.title('Salary Prediction (Linear vs Polynomial)')
+plt.xlabel('Position Level')
+plt.ylabel('Salary')
+plt.legend()
+plt.show()
+
+# Step 8: Predicting salary for level 11 and 12
+level_11 = np.array([[11]])
+level_12 = np.array([[12]])
+
+salary_level_11_linear = linear_regressor.predict(level_11)
+salary_level_12_linear = linear_regressor.predict(level_12)
+
+salary_level_11_poly = poly_regressor.predict(poly_features.transform(level_11))
+salary_level_12_poly = poly_regressor.predict(poly_features.transform(level_12))
+
+print(f"Predicted salary for level 11 using Linear Regression: {salary_level_11_linear[0]}")
+print(f"Predicted salary for level 12 using Linear Regression: {salary_level_12_linear[0]}")
+
+print(f"Predicted salary for level 11 using Polynomial Regression: {salary_level_11_poly[0]}")
+print(f"Predicted salary for level 12 using Polynomial Regression: {salary_level_12_poly[0]}")
+
+______________________________________________________
+Write a python program to find all null values from a dataset and remove them
+
+import pandas as pd
+
+# Step 1: Load the dataset
+# Replace the path with the actual file path of your dataset (e.g., 'your_dataset.csv')
+df = pd.read_csv('your_dataset.csv')
+
+# Step 2: Find and display null values
+print("Null values in the dataset before removing:")
+print(df.isnull().sum())
+
+# Step 3: Remove rows with any null values
+df_cleaned = df.dropna()
+
+# Step 4: Display the cleaned dataset
+print("\nDataset after removing rows with null values:")
+print(df_cleaned)
+
+# Optional: If you want to save the cleaned dataset to a new CSV file
+# df_cleaned.to_csv('cleaned_dataset.csv', index=False)
+
+______________________________________________________
+slip 24
+
+Write a python program to Implement Decision Tree classifier model on Data which is extracted from images that were taken from genuine and forged banknote-like specimens.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Step 1: Load the dataset (the dataset is available in the UCI repository)
+url = "data_banknote_authentication.csv"
+column_names = ['variance', 'skewness', 'curtosis', 'entropy', 'class']
+df = pd.read_csv(url, names=column_names)
+
+# Step 2: Inspect the dataset
+print("First few rows of the dataset:")
+print(df.head())
+
+# Step 3: Split the dataset into features and target variable
+X = df.drop('class', axis=1)  # Features
+y = df['class']  # Target variable (0: forged, 1: genuine)
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Train the Decision Tree Classifier model
+dt_classifier = DecisionTreeClassifier(random_state=42)
+dt_classifier.fit(X_train, y_train)
+
+# Step 6: Make predictions on the test set
+y_pred = dt_classifier.predict(X_test)
+
+# Step 7: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the Decision Tree Classifier: {accuracy * 100:.2f}%")
+
+# Step 8: Print Confusion Matrix and Classification Report
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Optional: Visualizing the Decision Tree (if needed)
+# from sklearn.tree import plot_tree
+# import matplotlib.pyplot as plt
+# plt.figure(figsize=(12, 8))
+# plot_tree(dt_classifier, filled=True, feature_names=X.columns, class_names=['Forged', 'Genuine'], rounded=True)
+# plt.show()
+
+______________________________________________________
+Write a python program to implement linear SVM using UniversalBank.csv. 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Load the dataset
+# Replace the path with the actual file path of UniversalBank.csv
+df = pd.read_csv('UniversalBank.csv')
+
+# Step 2: Inspect the dataset
+print("First few rows of the dataset:")
+print(df.head())
+
+# Step 3: Preprocess the data
+# Let's assume 'Personal Loan' column is the target variable we want to predict
+# We drop the 'ID' column (if exists) and any other columns that are not useful for modeling
+
+# Check for missing values and drop any rows with missing values (if any)
+df.dropna(inplace=True)
+
+# Drop columns that are not necessary for the model (like 'ID' or any other columns)
+df.drop(['ID', 'ZIP Code'], axis=1, inplace=True)
+
+# Convert categorical variables (e.g., 'Experience' or 'Family') to numeric using encoding if needed
+# For this example, we assume that all columns are numeric (for simplicity)
+
+# Step 4: Define features (X) and target variable (y)
+X = df.drop('Personal Loan', axis=1)  # Features (all columns except 'Personal Loan')
+y = df['Personal Loan']  # Target variable
+
+# Step 5: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 6: Standardize the features using StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 7: Train the Linear SVM model
+svm_classifier = SVC(kernel='linear', random_state=42)
+svm_classifier.fit(X_train, y_train)
+
+# Step 8: Make predictions on the test set
+y_pred = svm_classifier.predict(X_test)
+
+# Step 9: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the Linear SVM model: {accuracy * 100:.2f}%")
+
+# Step 10: Print Confusion Matrix and Classification Report
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+______________________________________________________
+slip 25
+
+Write a python program to implement Polynomial Regression for house price dataset.
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error
+
+# Step 1: Load the dataset (for demonstration, using a sample dataset)
+# Replace this with your actual dataset path
+# Example: df = pd.read_csv('house_prices.csv')
+# Here we are creating a sample dataset for the demo:
+
+data = {
+    'Size': [1500, 1800, 2400, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+    'Price': [245000, 312000, 379000, 450000, 500000, 600000, 650000, 700000, 720000, 750000]
+}
+
+df = pd.DataFrame(data)
+
+# Step 2: Preprocess the data
+X = df[['Size']].values  # Features (independent variable)
+y = df['Price'].values  # Target variable
+
+# Split the dataset into training and testing data (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 3: Polynomial Feature Transformation (Degree 3 for this example)
+poly = PolynomialFeatures(degree=3)
+X_train_poly = poly.fit_transform(X_train)
+X_test_poly = poly.transform(X_test)
+
+# Step 4: Fit the Polynomial Regression model using Linear Regression
+poly_regressor = LinearRegression()
+poly_regressor.fit(X_train_poly, y_train)
+
+# Step 5: Predict the results on the test set
+y_pred = poly_regressor.predict(X_test_poly)
+
+# Step 6: Evaluate the model performance using Mean Squared Error (MSE)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+
+# Step 7: Visualize the results (Plot the polynomial regression curve and data points)
+plt.scatter(X, y, color='blue')  # Scatter plot of original data
+plt.plot(X, poly_regressor.predict(poly.transform(X)), color='red')  # Polynomial regression line
+plt.title('Polynomial Regression for House Price Prediction')
+plt.xlabel('Size of the house (sq. feet)')
+plt.ylabel('Price of the house (in $)')
+plt.show()
+
+# Step 8: Predict price for a house of size 2500 sq. feet
+size = np.array([[2500]])  # Example: House size = 2500 sq. feet
+predicted_price = poly_regressor.predict(poly.transform(size))
+print(f"Predicted price for a 2500 sq. feet house: ${predicted_price[0]:,.2f}")
+
+______________________________________________________
+Create a two layered neural network with relu and sigmoid activation function.
+
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Generate a synthetic binary classification dataset
+# For example, 1000 samples with 10 features and binary target
+X, y = make_classification(n_samples=1000, n_features=10, n_informative=5, n_classes=2, random_state=42)
+
+# Step 2: Preprocess the data (optional but good practice)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Step 3: Build the Neural Network model
+model = Sequential()
+
+# First layer: 10 input features, 64 neurons, ReLU activation
+model.add(Dense(64, input_dim=X_train.shape[1], activation='relu'))
+
+# Second layer: 1 output unit for binary classification, Sigmoid activation
+model.add(Dense(1, activation='sigmoid'))
+
+# Step 4: Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Step 5: Train the model
+history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+
+# Step 6: Evaluate the model on the test data
+test_loss, test_acc = model.evaluate(X_test, y_test)
+print(f"Test accuracy: {test_acc}")
+
+# Step 7: Make predictions
+predictions = model.predict(X_test)
+
+# Show a sample prediction
+print(f"Sample prediction (first 5 samples): {predictions[:5]}")
+
+______________________________________________________
+slip 26
+
+Create KNN model on Indian diabetes patient’s database and predict whether a new patient is diabetic (1) or not (0). Find optimal value of K.
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+
+# Step 1: Load the Indian Diabetes dataset (replace with actual path)
+# For demonstration, I'll assume you're using the dataset available on UCI or Kaggle.
+# You can use pd.read_csv() to load your dataset, e.g., df = pd.read_csv('diabetes.csv')
+
+# Example data (you should replace this with actual dataset)
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
+df = pd.read_csv(url, names=columns)
+
+# Step 2: Preprocess the data
+# Check for missing values (diabetes dataset typically has 0 values where data might be missing)
+df.replace(0, np.nan, inplace=True)
+df.fillna(df.mean(), inplace=True)  # Replace missing values with the column mean
+
+# Step 3: Split the data into features (X) and target (y)
+X = df.drop('Outcome', axis=1)  # Features
+y = df['Outcome']  # Target variable
+
+# Step 4: Standardize the features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Step 5: Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Step 6: Find the optimal value of K
+accuracy_scores = []
+
+# Test different values of K (from 1 to 20)
+for k in range(1, 21):
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    y_pred = knn.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    accuracy_scores.append(accuracy)
+
+# Step 7: Plot the accuracy scores to visualize the best K
+plt.plot(range(1, 21), accuracy_scores, marker='o', color='b')
+plt.title('KNN Accuracy vs K Value')
+plt.xlabel('K Value')
+plt.ylabel('Accuracy')
+plt.show()
+
+# Step 8: Identify the best K (max accuracy)
+optimal_k = accuracy_scores.index(max(accuracy_scores)) + 1
+print(f"The optimal value of K is: {optimal_k}")
+
+# Step 9: Train the model with the optimal K and make predictions
+knn_optimal = KNeighborsClassifier(n_neighbors=optimal_k)
+knn_optimal.fit(X_train, y_train)
+y_pred_optimal = knn_optimal.predict(X_test)
+
+# Evaluate the model with optimal K
+accuracy_optimal = accuracy_score(y_test, y_pred_optimal)
+print(f"Accuracy with optimal K ({optimal_k}): {accuracy_optimal}")
+
+# Step 10: Predict for a new patient (example)
+# New patient data (replace with actual features for a new patient)
+new_patient = np.array([[6, 148, 72, 35, 0, 33.6, 0.627, 50]])  # Example new patient data
+new_patient_scaled = scaler.transform(new_patient)  # Standardize the features
+prediction = knn_optimal.predict(new_patient_scaled)
+
+print(f"Predicted outcome for the new patient: {'Diabetic' if prediction[0] == 1 else 'Not Diabetic'}")
+
+______________________________________________________
+Use Apriori algorithm on groceries dataset to find which items are brought together. Use minimum support =0.25
+
+import pandas as pd
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# Step 1: Load the groceries dataset
+# Example dataset - you can replace this with your own groceries dataset
+# For this example, I'm using a sample dataset from a CSV file.
+
+# Sample data: Replace it with your groceries dataset
+data = {
+    'Milk': [1, 1, 0, 1, 1, 0],
+    'Bread': [1, 1, 1, 0, 1, 1],
+    'Butter': [1, 0, 1, 1, 1, 1],
+    'Cheese': [0, 1, 1, 1, 1, 0],
+    'Eggs': [1, 1, 1, 1, 0, 1],
+}
+
+# Convert the data into a DataFrame
+df = pd.DataFrame(data)
+
+# Step 2: Apply the Apriori algorithm to find frequent itemsets
+# The min_support parameter is set to 0.25 (25%)
+frequent_itemsets = apriori(df, min_support=0.25, use_colnames=True)
+
+# Step 3: Generate association rules from the frequent itemsets
+# We will use the 'lift' metric to find strong rules.
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.0)
+
+# Step 4: Display the results
+print("Frequent Itemsets:")
+print(frequent_itemsets)
+
+print("\nAssociation Rules:")
+print(rules)
+
+
+______________________________________________________
+slip 27
+
+Create a multiple linear regression model for house price dataset divide dataset into train and test data while giving it to model and predict prices of house.
+
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the dataset (replace this with your actual dataset)
+# Example dataset with columns: 'Rooms', 'Sqft', 'Location', 'Price'
+df = pd.read_csv('house_prices.csv')
+
+# Step 2: Data preprocessing (Handle missing values, encode categorical data if necessary)
+# Example: Dropping rows with missing values
+df = df.dropna()
+
+# If you have categorical columns like 'Location', you might want to encode them:
+# For simplicity, assume 'Location' is a categorical column
+# df = pd.get_dummies(df, columns=['Location'])
+
+# Step 3: Define the features (X) and the target variable (y)
+X = df[['Rooms', 'Sqft', 'Location']]  # Replace with actual feature columns
+y = df['Price']  # Target variable
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Create and train the Multiple Linear Regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Step 6: Make predictions using the test set
+y_pred = model.predict(X_test)
+
+# Step 7: Evaluate the model's performance
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# Print the results
+print("Mean Squared Error:", mse)
+print("R-squared:", r2)
+
+# Step 8: Predict the price for a house with a specific set of features (e.g., 3 rooms, 2000 sqft)
+sample_house = pd.DataFrame({'Rooms': [3], 'Sqft': [2000], 'Location': ['Location1']})  # Example input
+predicted_price = model.predict(sample_house)
+print("Predicted Price for the house:", predicted_price[0])
+
+______________________________________________________
+Fit the simple linear regression and polynomial linear regression models to Salary_positions.csv data. Find which one is more accurately fitting to the given data. Also predict the salaries of level 11 and level 12 employees. 
+
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Step 1: Load the dataset
+df = pd.read_csv('Salary_positions.csv')  # Make sure to use your own path to the file
+
+# Step 2: Preprocess the data (drop missing values if any)
+df = df.dropna()
+
+# Step 3: Define features (X) and target (y)
+X = df[['Level']]  # Independent variable (Employee level)
+y = df['Salary']  # Target variable (Salary)
+
+# Step 4: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Fit Simple Linear Regression Model
+simple_regressor = LinearRegression()
+simple_regressor.fit(X_train, y_train)
+
+# Predicting with the Simple Linear Regression Model
+y_pred_simple = simple_regressor.predict(X_test)
+
+# Step 6: Fit Polynomial Linear Regression Model
+# Degree of polynomial regression (let's try degree=4 to capture more complexity)
+poly = PolynomialFeatures(degree=4)
+X_poly = poly.fit_transform(X)
+
+# Split data for polynomial regression model
+X_train_poly, X_test_poly, y_train_poly, y_test_poly = train_test_split(X_poly, y, test_size=0.2, random_state=42)
+
+# Create polynomial regression model and fit it
+poly_regressor = LinearRegression()
+poly_regressor.fit(X_train_poly, y_train_poly)
+
+# Predicting with the Polynomial Regression Model
+y_pred_poly = poly_regressor.predict(X_test_poly)
+
+# Step 7: Evaluate the models
+# Simple Linear Regression Evaluation
+mse_simple = mean_squared_error(y_test, y_pred_simple)
+r2_simple = r2_score(y_test, y_pred_simple)
+
+# Polynomial Regression Evaluation
+mse_poly = mean_squared_error(y_test_poly, y_pred_poly)
+r2_poly = r2_score(y_test_poly, y_pred_poly)
+
+# Step 8: Output the evaluation results
+print("Simple Linear Regression Evaluation:")
+print("Mean Squared Error:", mse_simple)
+print("R-squared:", r2_simple)
+
+print("\nPolynomial Linear Regression Evaluation:")
+print("Mean Squared Error:", mse_poly)
+print("R-squared:", r2_poly)
+
+# Step 9: Predict the salaries for level 11 and level 12
+level_11 = np.array([[11]])
+level_12 = np.array([[12]])
+
+# Predict using Simple Linear Regression
+salary_11_simple = simple_regressor.predict(level_11)
+salary_12_simple = simple_regressor.predict(level_12)
+
+# Predict using Polynomial Linear Regression
+level_11_poly = poly.transform(level_11)
+level_12_poly = poly.transform(level_12)
+
+salary_11_poly = poly_regressor.predict(level_11_poly)
+salary_12_poly = poly_regressor.predict(level_12_poly)
+
+# Output the predicted salaries
+print("\nPredicted Salary for Level 11 Employee:")
+print("Simple Linear Regression:", salary_11_simple[0])
+print("Polynomial Linear Regression:", salary_11_poly[0])
+
+print("\nPredicted Salary for Level 12 Employee:")
+print("Simple Linear Regression:", salary_12_simple[0])
+print("Polynomial Linear Regression:", salary_12_poly[0])
+
+# Optional: Visualize the results
+plt.figure(figsize=(10, 6))
+
+# Scatter plot of the data
+plt.scatter(X, y, color='blue', label='Actual Salary Data')
+
+# Simple linear regression line
+plt.plot(X, simple_regressor.predict(X), color='red', label='Simple Linear Regression')
+
+# Polynomial regression curve
+X_grid = np.arange(min(X.values), max(X.values), 0.1).reshape(-1, 1)
+plt.plot(X_grid, poly_regressor.predict(poly.transform(X_grid)), color='green', label='Polynomial Linear Regression')
+
+plt.title('Salary vs. Position Level')
+plt.xlabel('Position Level')
+plt.ylabel('Salary')
+plt.legend()
+plt.show()
+
+______________________________________________________
+slip 28
+
+Write a python program to categorize the given news text into one of the available 20 categories of news groups, using multinomial Naïve Bayes machine learning model.
+
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+
+# Step 1: Load the dataset
+news_data = fetch_20newsgroups(subset='all')
+
+# Step 2: Preprocess the text data (convert to TF-IDF features)
+tfidf_vectorizer = TfidfVectorizer(stop_words='english')
+X = tfidf_vectorizer.fit_transform(news_data.data)  # Convert the text to a sparse matrix of TF-IDF features
+y = news_data.target  # The target labels (categories)
+
+# Step 3: Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Train the Multinomial Naive Bayes model
+naive_bayes_classifier = MultinomialNB()
+naive_bayes_classifier.fit(X_train, y_train)
+
+# Step 5: Make predictions on the test data
+y_pred = naive_bayes_classifier.predict(X_test)
+
+# Step 6: Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy of the Multinomial Naive Bayes Model:", accuracy)
+
+# Display classification report for detailed analysis
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=news_data.target_names))
+
+# Step 7: Predict the category of a new news article
+def predict_category(news_text):
+    news_tfidf = tfidf_vectorizer.transform([news_text])  # Transform the input news text
+    predicted_category = naive_bayes_classifier.predict(news_tfidf)  # Predict the category
+    return news_data.target_names[predicted_category[0]]  # Return the category name
+
+# Example: Predicting category of a new news article
+new_article = """
+The economy is facing a tough time with inflation on the rise, and the market is reacting negatively. Many industries are struggling, 
+and consumers are feeling the pressure on their budgets. Financial analysts are trying to predict how long this downturn will last.
+"""
+predicted_category = predict_category(new_article)
+print("\nPredicted Category of the New Article:", predicted_category)
+
+______________________________________________________
+Classify the iris flowers dataset using SVM and find out the flower type depending on the given input data like sepal length, sepal width, petal length and petal width. Find accuracy of all SVM kernels. 
+
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data  # Features (sepal length, sepal width, petal length, petal width)
+y = iris.target  # Target labels (species of Iris flowers)
+
+# Step 2: Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 3: Standardize the features (important for SVM performance)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 4: Train and evaluate SVM with different kernels
+
+# List of kernels to try
+kernels = ['linear', 'poly', 'rbf', 'sigmoid']
+accuracies = []
+
+# Loop through each kernel and train the SVM model
+for kernel in kernels:
+    # Initialize the SVM classifier with the given kernel
+    model = SVC(kernel=kernel)
+    
+    # Train the model
+    model.fit(X_train, y_train)
+    
+    # Make predictions on the test set
+    y_pred = model.predict(X_test)
+    
+    # Calculate the accuracy
+    accuracy = accuracy_score(y_test, y_pred)
+    accuracies.append(accuracy)
+    
+    # Print the accuracy for each kernel
+    print(f"Accuracy of SVM with {kernel} kernel: {accuracy * 100:.2f}%")
+
+# Step 5: Plotting the accuracy comparison
+plt.figure(figsize=(8, 6))
+plt.bar(kernels, accuracies, color='skyblue')
+plt.xlabel('SVM Kernel Type')
+plt.ylabel('Accuracy (%)')
+plt.title('Comparison of SVM Kernels for Iris Flower Classification')
+plt.ylim([0, 1])
+plt.show()
+
+# Step 6: Make a prediction for a new flower
+# Example input: [sepal length, sepal width, petal length, petal width]
+new_flower = np.array([[5.1, 3.5, 1.4, 0.2]])
+
+# Standardize the new flower's features
+new_flower_scaled = scaler.transform(new_flower)
+
+# Using the best kernel (we will assume `rbf` is the best from the output)
+best_model = SVC(kernel='rbf')
+best_model.fit(X_train, y_train)
+prediction = best_model.predict(new_flower_scaled)
+
+# Output the predicted flower type
+flower_types = iris.target_names
+print(f"Predicted flower type: {flower_types[prediction[0]]}")
+
+______________________________________________________
+slip 29
+
+Take iris flower dataset and reduce 4D data to 2D data using PCA. Then train the model and predict new flower with given measurements.
+
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn import datasets
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
+# Step 1: Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data  # Features (sepal length, sepal width, petal length, petal width)
+y = iris.target  # Target labels (species of Iris flowers)
+
+# Step 2: Standardize the features (important for PCA)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Step 3: Apply PCA to reduce the data from 4D to 2D
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+# Step 4: Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_pca, y, test_size=0.3, random_state=42)
+
+# Step 5: Train the model (using SVM here)
+model = SVC(kernel='rbf')
+model.fit(X_train, y_train)
+
+# Step 6: Predict on the test set and evaluate accuracy
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the model after PCA (2D data): {accuracy * 100:.2f}%")
+
+# Step 7: Visualizing the reduced 2D data (for training set)
+plt.figure(figsize=(8, 6))
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='viridis', edgecolor='k', s=50)
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Iris Dataset: 2D representation after PCA')
+plt.colorbar(label='Flower Species')
+plt.show()
+
+# Step 8: Make a prediction for a new flower
+# Example input: [sepal length, sepal width, petal length, petal width]
+new_flower = np.array([[5.1, 3.5, 1.4, 0.2]])
+
+# Standardize the new flower's features
+new_flower_scaled = scaler.transform(new_flower)
+
+# Apply PCA on the new flower
+new_flower_pca = pca.transform(new_flower_scaled)
+
+# Predict the species of the new flower
+prediction = model.predict(new_flower_pca)
+flower_types = iris.target_names
+
+# Output the predicted flower type
+print(f"Predicted flower type for the new flower: {flower_types[prediction[0]]}")
+
+______________________________________________________
+Use K-means clustering model and classify the employees into various income groups or clusters. Preprocess data if require (i.e. drop missing or null values). Use elbow method and Silhouette Score to find value of k. 
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+
+# Step 1: Load the employee dataset (replace with your dataset file path)
+# Assuming we have a CSV file with employee data containing features like income, age, etc.
+# Example: employee_data.csv
+
+# df = pd.read_csv('employee_data.csv')
+
+# For this example, let's create a mock dataset with income, age, and years of experience
+data = {
+    'Age': [25, 30, 35, 40, 45, 50, 55, 60, 25, 30, 40, 50, 60, 28, 38],
+    'Years_of_Experience': [1, 5, 10, 12, 8, 20, 18, 25, 2, 6, 15, 22, 28, 4, 11],
+    'Annual_Income': [30000, 45000, 50000, 60000, 75000, 90000, 120000, 150000, 35000, 47000, 52000, 64000, 67000, 38000, 58000]
+}
+
+df = pd.DataFrame(data)
+
+# Step 2: Preprocess the data (handle missing values if any)
+# Drop any rows with missing values (if they exist)
+df.dropna(inplace=True)
+
+# Step 3: Feature scaling (important for K-means)
+scaler = StandardScaler()
+df_scaled = scaler.fit_transform(df)
+
+# Step 4: Use Elbow method to find the optimal value of K
+wcss = []  # Within-cluster sum of squares
+for k in range(1, 11):
+    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=42)
+    kmeans.fit(df_scaled)
+    wcss.append(kmeans.inertia_)
+
+# Plotting the Elbow curve
+plt.figure(figsize=(8, 6))
+plt.plot(range(1, 11), wcss, marker='o', linestyle='--')
+plt.title('Elbow Method for Optimal K')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('WCSS (Within-cluster sum of squares)')
+plt.show()
+
+# Step 5: Calculate Silhouette Score for each value of K to further validate
+sil_scores = []
+for k in range(2, 11):  # Silhouette Score requires at least 2 clusters
+    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=42)
+    cluster_labels = kmeans.fit_predict(df_scaled)
+    sil_score = silhouette_score(df_scaled, cluster_labels)
+    sil_scores.append(sil_score)
+
+# Plotting Silhouette scores
+plt.figure(figsize=(8, 6))
+plt.plot(range(2, 11), sil_scores, marker='o', linestyle='--')
+plt.title('Silhouette Score for Optimal K')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('Silhouette Score')
+plt.show()
+
+# Step 6: Fit the K-means model with the chosen K (based on Elbow and Silhouette analysis)
+# Let's assume from the elbow and silhouette score, K=3 is the best choice
+optimal_k = 3
+kmeans = KMeans(n_clusters=optimal_k, init='k-means++', max_iter=300, n_init=10, random_state=42)
+y_kmeans = kmeans.fit_predict(df_scaled)
+
+# Step 7: Visualize the clusters (2D scatter plot)
+plt.figure(figsize=(8, 6))
+plt.scatter(df_scaled[y_kmeans == 0, 0], df_scaled[y_kmeans == 0, 1], s=100, c='red', label='Cluster 1')
+plt.scatter(df_scaled[y_kmeans == 1, 0], df_scaled[y_kmeans == 1, 1], s=100, c='blue', label='Cluster 2')
+plt.scatter(df_scaled[y_kmeans == 2, 0], df_scaled[y_kmeans == 2, 1], s=100, c='green', label='Cluster 3')
+
+# Plotting the cluster centers
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=300, c='yellow', label='Centroids', marker='X')
+plt.title('Employee Clusters based on Income Groups')
+plt.xlabel('Scaled Feature 1')
+plt.ylabel('Scaled Feature 2')
+plt.legend()
+plt.show()
+
+# Step 8: Add cluster labels to the original dataset (Optional)
+df['Cluster'] = y_kmeans
+
+# Displaying the first few rows of the dataframe with cluster labels
+print(df.head())
+
