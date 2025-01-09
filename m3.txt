@@ -1,3 +1,4 @@
+m3.txt => dev2
 slip 1
 Use Apriori algorithm on groceries dataset to find which items are brought together. Use minimum support =0.25
 
